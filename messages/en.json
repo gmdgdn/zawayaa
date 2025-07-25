@@ -1,0 +1,20 @@
+{
+  "LanguageSplash": {
+    "chooseLanguage": "Choose your language",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "Header": {
+    "slogan": "The Story from Every Angle",
+    "home": "Home",
+    "opinions": "Opinions",
+    "podcasts": "Podcasts",
+    "documentaries": "Documentaries"
+  },
+  "Footer": {
+    "about": "Zawaya is a non-profit, bilingual knowledge hub that links Arab realities to global transformations through rigorous, multi-disciplinary analysis.",
+    "sitemap": "Sitemap",
+    "contact": "Contact",
+    "social": "Social"
+  }
+}
