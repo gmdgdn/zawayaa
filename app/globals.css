@@ -2,6 +2,210 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Zawaya Global Design Foundations */
+
+/* ===== FONT LOADING ===== */
+@import url('https://fonts.googleapis.com/css2?family=Eurostile:wght@400;600;700&display=swap');
+
+/* Ge SS Two should be loaded via @next/font/local for better performance */
+/* For now using system fallback - implement local loading in production */
+
+/* ===== BASE STYLES ===== */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: auto; /* Better for Arabic */
+}
+
+/* RTL Support */
+html[dir="rtl"] {
+  font-family: 'Ge SS Two', 'Dubai', 'Tahoma', sans-serif;
+}
+
+html[dir="ltr"] {
+  font-family: 'Eurostile LT Std', 'Arial', sans-serif;
+}
+
+body {
+  font-size: 16px;
+  line-height: 1.6;
+  color: theme('colors.gray.900');
+  background-color: theme('colors.white');
+}
+
+/* ===== TYPOGRAPHY ===== */
+.prose {
+  max-width: 620px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.prose-arabic {
+  line-height: 1.3; /* Minimum for Arabic diacritics */
+  font-family: 'Ge SS Two', sans-serif;
+}
+
+/* ===== FOCUS STATES ===== */
+*:focus-visible {
+  outline: 2px dashed theme('colors.clr-accent');
+  outline-offset: 2px;
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-primary {
+  border-radius: 12px;
+  background-color: theme('colors.clr-primary-dark');
+  color: white;
+  transition: all 200ms ease-out;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 100, 90, 0.3);
+}
+
+.btn-accent {
+  border-radius: 12px;
+  background-color: theme('colors.clr-accent');
+  color: white;
+  transition: all 200ms ease-out;
+}
+
+.btn-accent:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(246, 82, 61, 0.3);
+}
+
+/* ===== CARD STYLES ===== */
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 200ms ease-out;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== SECTION HEADINGS ===== */
+.section-heading {
+  color: theme('colors.clr-iris');
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.section-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 32px;
+  height: 2px;
+  background-color: theme('colors.clr-accent');
+}
+
+html[dir="rtl"] .section-heading::after {
+  left: auto;
+  right: 0;
+}
+
+/* ===== LAYOUT GRID ===== */
+.grid-layout {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr); /* Mobile: 4 columns */
+}
+
+@media (min-width: 768px) {
+  .grid-layout {
+    grid-template-columns: repeat(8, 1fr); /* Tablet: 8 columns */
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-layout {
+    grid-template-columns: repeat(12, 1fr); /* Desktop: 12 columns */
+  }
+}
+
+/* ===== CONTENT WIDTH ===== */
+.content-container {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.reading-container {
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ===== BADGES & PILLS ===== */
+.badge {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-iris {
+  background-color: theme('colors.clr-iris');
+  color: white;
+}
+
+.badge-menthol {
+  background-color: theme('colors.clr-menthol');
+  color: theme('colors.gray.900');
+}
+
+.badge-naples {
+  background-color: theme('colors.clr-naples');
+  color: theme('colors.gray.900');
+}
+
+.badge-orange {
+  background-color: theme('colors.clr-orange');
+  color: white;
+}
+
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== UTILITIES ===== */
+.text-balance {
+  text-wrap: balance;
+}
+
+.transition-default {
+  transition: all 200ms ease-out;
+}
+
+/* ===== GEOMETRIC PATTERN OVERLAY ===== */
+.pattern-overlay {
+  position: relative;
+}
+
+.pattern-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/pattern.png');
+  background-repeat: repeat;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Import Rich Text Editor Styles */
+@import '../styles/editor.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

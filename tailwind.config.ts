@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss"
-import { colors } from "./lib/theme"
+import { colors, typography, layout, motion } from "./lib/theme"
 
 const config = {
   darkMode: ["class"],
@@ -16,12 +16,24 @@ const config = {
       center: true,
       padding: "2rem",
       screens: {
+        sm: "640px",
+        md: "768px", 
+        lg: "1024px",
+        xl: "1280px",
         "2xl": "1400px",
       },
     },
     extend: {
       colors: {
-        // Custom Zawaya colors
+        // Official Zawaya Brand Tokens
+        "clr-primary-dark": colors["primary-dark"],
+        "clr-accent": colors.accent,
+        "clr-iris": colors.iris,
+        "clr-orange": colors.orange,
+        "clr-menthol": colors.menthol,
+        "clr-naples": colors.naples,
+        
+        // Legacy Zawaya colors (for backward compatibility)
         "zawaya-primary": colors.primary,
         "zawaya-accent": colors.accent,
         "zawaya-iris": colors.iris,
@@ -63,12 +75,44 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
+      fontSize: {
+        xs: [typography.scale.xs, { lineHeight: typography.lineHeight.body.toString() }],
+        sm: [typography.scale.sm, { lineHeight: typography.lineHeight.body.toString() }],
+        base: [typography.scale.base, { lineHeight: typography.lineHeight.reading.toString() }],
+        lg: [typography.scale.lg, { lineHeight: typography.lineHeight.body.toString() }],
+        xl: [typography.scale.xl, { lineHeight: typography.lineHeight.body.toString() }],
+        "2xl": [typography.scale["2xl"], { lineHeight: typography.lineHeight.display.toString() }],
+        "3xl": [typography.scale["3xl"], { lineHeight: typography.lineHeight.display.toString() }],
+        "4xl": [typography.scale["4xl"], { lineHeight: typography.lineHeight.display.toString() }],
+      },
       fontFamily: {
-        "ge-ss": ["Ge SS Two", "sans-serif"],
-        eurostile: ["Eurostile LT Std", "sans-serif"],
+        "ge-ss": typography.fonts.arabic,
+        "eurostile": typography.fonts.latin,
+        // RTL default
+        sans: typography.fonts.arabic,
+      },
+      lineHeight: {
+        'arabic': typography.lineHeight.arabic.toString(),
+        'body': typography.lineHeight.body.toString(),
+        'display': typography.lineHeight.display.toString(),
+        'reading': typography.lineHeight.reading.toString(),
+      },
+      maxWidth: {
+        'content': layout.maxContentWidth,
+        'reading': '620px', // for article body text
+      },
+      aspectRatio: {
+        'card': '3/2',
+        'video': '16/9',
       },
       backgroundImage: {
         "geometric-pattern": "url('/pattern.png')",
+      },
+      transitionDuration: {
+        'default': motion.duration,
+      },
+      transitionTimingFunction: {
+        'default': motion.easing,
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -91,7 +135,9 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+  ],
 } satisfies Config
 
 export default config

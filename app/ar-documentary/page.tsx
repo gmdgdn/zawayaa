@@ -189,7 +189,7 @@ export default function ArDocumentaryPage() {
   return (
     <div className="min-h-screen bg-gray-900 text-white" dir="rtl">
       {/* Hero Banner with Auto-Playing Video */}
-      <section className="relative h-screen overflow-hidden">
+      <section className="relative h-[80vh] min-h-[600px] max-h-[800px] overflow-hidden">
         <video
           ref={bannerVideoRef}
           className="absolute inset-0 w-full h-full object-cover"
@@ -206,17 +206,17 @@ export default function ArDocumentaryPage() {
 
         {/* Hero Content */}
         <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="text-center space-y-8 max-w-4xl px-6">
-            <h1 className="text-6xl md:text-8xl font-bold font-ge-ss mb-6">زوايا الوثائقية</h1>
-            <p className="text-xl md:text-2xl text-gray-200 font-ge-ss leading-relaxed max-w-3xl mx-auto">
+          <div className="text-center space-y-6 max-w-4xl px-4 md:px-6">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold font-ge-ss mb-4">زوايا الوثائقية</h1>
+            <p className="text-lg md:text-xl lg:text-2xl text-gray-200 font-ge-ss leading-relaxed max-w-3xl mx-auto">
               استكشف عالم الوثائقيات العربية المتميزة، حيث تلتقي القصص الحقيقية بالسرد المبدع لتقدم لك تجربة بصرية لا
               تُنسى
             </p>
-            <div className="flex items-center justify-center space-x-6 space-x-reverse">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:space-x-6 sm:space-x-reverse">
               <Button
                 size="lg"
-                className="bg-zawaya-accent hover:bg-zawaya-accent/90 text-white px-8 py-4 text-lg font-ge-ss"
-                style={{ backgroundColor: colors.accent }}
+                className="bg-clr-accent hover:bg-clr-accent/90 text-white px-8 py-4 text-lg font-ge-ss w-full sm:w-auto"
+                onClick={() => setSelectedDocumentary(featuredDocumentary)}
               >
                 <Play className="w-6 h-6 ml-2" />
                 ابدأ المشاهدة
@@ -224,7 +224,8 @@ export default function ArDocumentaryPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 text-lg font-ge-ss bg-transparent"
+                className="border-white text-white hover:bg-white hover:text-gray-900 px-8 py-4 text-lg font-ge-ss bg-transparent w-full sm:w-auto"
+                onClick={() => document.getElementById('documentary-grid')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 تصفح المجموعة
               </Button>
@@ -324,7 +325,7 @@ export default function ArDocumentaryPage() {
       </section>
 
       {/* Documentary Grid */}
-      <section className="py-20 px-6 bg-gray-900">
+      <section id="documentary-grid" className="py-20 px-6 bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold font-ge-ss mb-6">مجموعة الوثائقيات</h2>
@@ -405,18 +406,18 @@ export default function ArDocumentaryPage() {
 
       {/* Video Modal */}
       <Dialog open={!!selectedDocumentary} onOpenChange={() => setSelectedDocumentary(null)}>
-        <DialogContent className="max-w-6xl w-full bg-gray-900 border-gray-700 text-white">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto bg-gray-900 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold font-ge-ss text-right">{selectedDocumentary?.title}</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl font-bold font-ge-ss text-right">{selectedDocumentary?.title}</DialogTitle>
           </DialogHeader>
 
           {selectedDocumentary && (
             <div className="space-y-6">
               {/* Video Player */}
-              <div className="relative bg-black rounded-lg overflow-hidden">
+              <div className="relative bg-black rounded-lg overflow-hidden aspect-video">
                 <video
                   ref={videoRef}
-                  className="w-full h-96 object-cover"
+                  className="w-full h-full object-cover"
                   poster={selectedDocumentary.thumbnail}
                   onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                   onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}

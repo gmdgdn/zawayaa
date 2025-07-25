@@ -1,11 +1,36 @@
-import type React from "react"
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { LanguageProvider } from "@/lib/language-context"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
+import EnhancedNavigation from "@/components/enhanced-navigation"
+import EnhancedFooter from "@/components/enhanced-footer"
+import { ThemeProvider } from "@/components/theme-provider"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter"
+})
+
+export const metadata: Metadata = {
+  title: "زوايا | Zawaya - القصة من كل زواياها",
+  description: "منصة معرفية غير ربحية، ثنائية اللغة، تربط الواقع العربي بالتحولات العالمية عبر تحليلات رصينة متعددة الاختصاصات.",
+  keywords: "زوايا، تحليل سياسي، ثقافة عربية، بودكاست، مقالات، آراء سياسية",
+  authors: [{ name: "Zawaya Platform" }],
+  openGraph: {
+    title: "زوايا | Zawaya - القصة من كل زواياها",
+    description: "منصة معرفية غير ربحية، ثنائية اللغة، تربط الواقع العربي بالتحولات العالمية",
+    url: "https://zawaya.org",
+    siteName: "Zawaya",
+    locale: "ar_SA",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "زوايا | Zawaya",
+    description: "القصة من كل زواياها",
+  },
+  viewport: "width=device-width, initial-scale=1",
+  robots: "index, follow",
+}
 
 export default function RootLayout({
   children,
@@ -14,29 +39,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Ge+SS+Two:wght@300;400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Eurostile+LT+Std:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className={inter.className}>
-        <LanguageProvider>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+      <body className={`${inter.variable} font-ge-ss antialiased`} suppressHydrationWarning>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <div className="min-h-screen flex flex-col bg-white">
+            <EnhancedNavigation />
+            <main className="flex-1">
+              {children}
+            </main>
+            <EnhancedFooter />
           </div>
-        </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
 }
-
-export const metadata = {
-      generator: 'v0.dev'
-    };

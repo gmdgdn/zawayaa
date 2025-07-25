@@ -14,12 +14,12 @@ const footerContent = {
     quickLinks: {
       title: "روابط سريعة",
       links: [
-        { name: "الرئيسية", href: "/" },
-        { name: "آراء سياسية", href: "/opinions" },
-        { name: "تقييم الوضع", href: "/assessment" },
-        { name: "بودكاست", href: "/podcast" },
-        { name: "وثائقيات", href: "/documentaries" },
-        { name: "اتصل بنا", href: "/contact" },
+        { name: "الرئيسية", href: "/ar" },
+        { name: "آراء سياسية", href: "/ar/opinions" },
+        { name: "تقييم الوضع", href: "/ar/assessment" },
+        { name: "بودكاست", href: "/ar/podcast" },
+        { name: "وثائقيات", href: "/ar/documentaries" },
+        { name: "اتصل بنا", href: "/ar/contact" },
       ],
     },
     contact: {
@@ -38,12 +38,12 @@ const footerContent = {
     quickLinks: {
       title: "Quick Links",
       links: [
-        { name: "Home", href: "/" },
-        { name: "Political Opinions", href: "/opinions" },
-        { name: "Situation Assessment", href: "/assessment" },
-        { name: "Podcast", href: "/podcast" },
-        { name: "Documentaries", href: "/documentaries" },
-        { name: "Contact Us", href: "/contact" },
+        { name: "Home", href: "/en" },
+        { name: "Political Opinions", href: "/en/opinions" },
+        { name: "Situation Assessment", href: "/en/assessment" },
+        { name: "Podcast", href: "/en/podcast" },
+        { name: "Documentaries", href: "/en/documentaries" },
+        { name: "Contact Us", href: "/en/contact" },
       ],
     },
     contact: {

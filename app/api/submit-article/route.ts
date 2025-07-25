@@ -1,83 +1,92 @@
-import { type NextRequest, NextResponse } from "next/server"
-
-// This would typically use Supabase client
-// For now, we'll simulate the API response
+import { NextRequest, NextResponse } from 'next/server'
+import { submissionService } from '@/lib/database'
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const title = formData.get("title") as string
-    const bio = formData.get("bio") as string
-    const file = formData.get("file") as File
+    
+    // Extract form fields
+    const authorName = formData.get('author_name') as string
+    const email = formData.get('email') as string
+    const title = formData.get('title') as string
+    const category = formData.get('category') as string
+    const summary = formData.get('summary') as string
+    const content = formData.get('content') as string
+    const authorBio = formData.get('author_bio') as string || undefined
+    const references = formData.get('references') as string || undefined
+    const qualifications = formData.get('qualifications') as string || undefined
+    const file = formData.get('file') as File || null
 
     // Validate required fields
-    if (!name || !email || !title || !bio || !file) {
-      return NextResponse.json({ error: "جميع الحقول مطلوبة" }, { status: 400 })
+    if (!authorName || !email || !title || !category || !summary || !content) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'جميع الحقول المطلوبة يجب أن تكون مملوءة' 
+        },
+        { status: 400 }
+      )
     }
 
-    // In a real implementation, you would:
-    // 1. Upload the file to Supabase Storage
-    // 2. Insert the submission data into the guest_submissions table
-    // 3. Send confirmation email to the user
-    // 4. Notify the editorial team
-
-    /*
-    Example Supabase implementation:
-    
-    import { createClient } from '@supabase/supabase-js'
-    
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
-
-    // Upload file to Supabase Storage
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('article-submissions')
-      .upload(fileName, file)
-
-    if (uploadError) {
-      throw uploadError
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, error: 'يرجى إدخال بريد إلكتروني صحيح' },
+        { status: 400 }
+      )
     }
 
-    // Insert submission into database
-    const { data, error } = await supabase
-      .from('guest_submissions')
-      .insert({
-        name,
-        email,
-        title,
-        bio,
-        file_path: uploadData.path,
-        file_name: file.name,
-        file_size: file.size,
-        status: 'pending',
-        submitted_at: new Date().toISOString()
-      })
-
-    if (error) {
-      throw error
+    // Handle file upload (if provided)
+    let fileUrl = null
+    if (file && file.size > 0) {
+      // TODO: Upload file to Supabase Storage
+      // For now, we'll just log that a file was provided
+      console.log('File provided:', file.name, file.size)
+      
+      // In a real implementation:
+      // const { data: uploadData, error: uploadError } = await supabase.storage
+      //   .from('submissions')
+      //   .upload(`${Date.now()}-${file.name}`, file)
+      // 
+      // if (uploadError) throw uploadError
+      // fileUrl = uploadData.path
     }
-    */
 
-    // Simulate successful submission
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Create submission in database
+    const submission = await submissionService.create({
+      author_name: authorName,
+      email,
+      title,
+      category,
+      summary,
+      content,
+      author_bio: authorBio,
+      references,
+      qualifications
+    })
 
-    return NextResponse.json(
-      {
-        message: "تم إرسال المقال بنجاح",
-        submissionId: `sub_${Date.now()}`,
-      },
-      { status: 200 },
-    )
+    // TODO: Send confirmation email to author
+    // TODO: Send notification email to editorial team
+
+    return NextResponse.json({
+      success: true,
+      message: 'تم إرسال المقال بنجاح! سنتواصل معك خلال 3-5 أيام عمل.',
+      data: {
+        submission_id: submission.id,
+        status: submission.status
+      }
+    })
+
   } catch (error) {
-    console.error("Submission error:", error)
-    return NextResponse.json({ error: "حدث خطأ أثناء إرسال المقال" }, { status: 500 })
+    console.error('Error submitting article:', error)
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'حدث خطأ أثناء إرسال المقال. يرجى المحاولة مرة أخرى.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    )
   }
 }

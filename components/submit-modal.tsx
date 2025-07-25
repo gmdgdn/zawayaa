@@ -25,18 +25,28 @@ interface SubmitModalProps {
 }
 
 interface FormData {
-  name: string
+  author_name: string
   email: string
   title: string
-  bio: string
+  category: string
+  summary: string
+  content: string
+  author_bio: string
+  references: string
+  qualifications: string
   file: File | null
 }
 
 interface FormErrors {
-  name?: string
+  author_name?: string
   email?: string
   title?: string
-  bio?: string
+  category?: string
+  summary?: string
+  content?: string
+  author_bio?: string
+  references?: string
+  qualifications?: string
   file?: string
 }
 

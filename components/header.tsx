@@ -8,20 +8,25 @@ import { useLanguage } from "@/lib/language-context"
 
 const navigation = {
   ar: [
-    { name: "الرئيسية", href: "/" },
-    { name: "آراء سياسية", href: "/opinions" },
-    { name: "تقييم الوضع", href: "/assessment" },
-    { name: "بودكاست", href: "/podcast" },
-    { name: "وثائقيات", href: "/documentaries" },
-    { name: "من نحن", href: "/about" },
+    { name: "الرئيسية", href: "/ar" },
+    { name: "آراء سياسية", href: "/ar/opinions" },
+    { name: "تقدير موقف", href: "/ar/assessment" },
+    { name: "مقالات", href: "/ar/articles" },
+    { name: "بودكاست", href: "/ar/podcast" },
+    { name: "البرامج", href: "/ar/programs" },
+    { name: "منبر الكُتّاب", href: "/ar/writers" },
+    { name: "بحث", href: "/ar/search" },
+    { name: "من نحن", href: "/ar/about" },
+    { name: "تواصل معنا", href: "/ar/contact" },
   ],
   en: [
-    { name: "Home", href: "/" },
-    { name: "Political Opinions", href: "/opinions" },
-    { name: "Situation Assessment", href: "/assessment" },
-    { name: "Podcast", href: "/podcast" },
-    { name: "Documentaries", href: "/documentaries" },
-    { name: "About Us", href: "/about" },
+    { name: "Home", href: "/en" },
+    { name: "Opinions", href: "/en/opinions" },
+    { name: "Documentaries", href: "/en/documentaries" },
+    { name: "Writers", href: "/en/writers" },
+    { name: "Search", href: "/en/search" },
+    { name: "About Us", href: "/en/about" },
+    { name: "Contact", href: "/en/contact" },
   ],
 }
 
@@ -30,26 +35,38 @@ export default function Header() {
   const { language, direction, setLanguage } = useLanguage()
 
   const toggleLanguage = () => {
-    setLanguage(language === "ar" ? "en" : "ar")
+    const newLang = language === "ar" ? "en" : "ar"
+    setLanguage(newLang)
+    // Redirect to corresponding language section
+    if (newLang === "en") {
+      window.location.href = "/en"
+    } else {
+      window.location.href = "/ar"
+    }
   }
 
   const currentNav = navigation[language]
-  const slogan = "القصة من كل زواياها"
+  const slogan = language === "ar" ? "القصة من كل زواياها" : "The Story from Every Angle"
+  const logoText = language === "ar" ? "ز" : "Z"
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-gray-200/20 supports-[backdrop-filter]:bg-white/60">
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-200/20 supports-[backdrop-filter]:bg-white/80">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
         {/* Logo - positioned based on direction */}
         <div className={`flex ${direction === "rtl" ? "order-3 lg:order-1" : "order-1"}`}>
-          <Link href="/" className="-m-1.5 p-1.5">
+          <Link href={language === "ar" ? "/ar" : "/en"} className="-m-1.5 p-1.5">
             <span className="sr-only">Zawaya</span>
             <div className="flex items-center space-x-2 space-x-reverse">
-              <div className="w-8 h-8 bg-zawaya-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">ز</span>
+              <div className="w-10 h-10 bg-zawaya-primary rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-xl">{logoText}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-eurostile font-bold text-zawaya-primary text-xl">Zawaya</span>
-                <span className="font-ge-ss text-xs text-gray-600">{slogan}</span>
+                <span className="font-eurostile font-bold text-zawaya-primary text-xl">
+                  {language === "ar" ? "زوايا" : "Zawaya"}
+                </span>
+                <span className={`text-xs text-gray-600 ${language === "ar" ? "font-ge-ss" : "font-eurostile"}`}>
+                  {slogan}
+                </span>
               </div>
             </div>
           </Link>
@@ -59,7 +76,7 @@ export default function Header() {
         <div className={`flex lg:hidden ${direction === "rtl" ? "order-1" : "order-3"}`}>
           <button
             type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
+            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700 hover:text-zawaya-primary"
             onClick={() => setMobileMenuOpen(true)}
           >
             <span className="sr-only">Open main menu</span>
@@ -68,18 +85,42 @@ export default function Header() {
         </div>
 
         {/* Desktop navigation - centered */}
-        <div className="hidden lg:flex lg:gap-x-8 order-2">
-          {currentNav.map((item) => (
+        <div className="hidden lg:flex lg:gap-x-6 order-2">
+          {currentNav.slice(0, 6).map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className={`text-sm font-medium leading-6 text-gray-900 hover:text-zawaya-accent transition-colors ${
+              className={`text-sm font-medium leading-6 text-gray-900 hover:text-zawaya-primary transition-colors ${
                 language === "ar" ? "font-ge-ss" : "font-eurostile"
               }`}
             >
               {item.name}
             </Link>
           ))}
+          
+          {/* More Menu for Additional Items */}
+          {currentNav.length > 6 && (
+            <div className="relative group">
+              <button className={`text-sm font-medium leading-6 text-gray-900 hover:text-zawaya-primary transition-colors ${
+                language === "ar" ? "font-ge-ss" : "font-eurostile"
+              }`}>
+                {language === "ar" ? "المزيد" : "More"}
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white shadow-lg rounded-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                {currentNav.slice(6).map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={`block px-4 py-2 text-sm text-gray-900 hover:bg-gray-50 hover:text-zawaya-primary ${
+                      language === "ar" ? "font-ge-ss" : "font-eurostile"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Language toggle */}
@@ -88,10 +129,12 @@ export default function Header() {
             variant="ghost"
             size="sm"
             onClick={toggleLanguage}
-            className="flex items-center space-x-1 space-x-reverse"
+            className="flex items-center space-x-1 space-x-reverse hover:text-zawaya-primary"
           >
             <Globe className="h-4 w-4" />
-            <span className="text-sm">{language === "ar" ? "EN" : "عر"}</span>
+            <span className="text-sm font-medium">
+              {language === "ar" ? "EN" : "عر"}
+            </span>
           </Button>
         </div>
       </nav>
@@ -104,10 +147,15 @@ export default function Header() {
             className={`fixed inset-y-0 ${direction === "rtl" ? "left-0" : "right-0"} z-50 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10`}
           >
             <div className="flex items-center justify-between">
-              <Link href="/" className="-m-1.5 p-1.5">
+              <Link href={language === "ar" ? "/ar" : "/en"} className="-m-1.5 p-1.5">
                 <span className="sr-only">Zawaya</span>
-                <div className="w-8 h-8 bg-zawaya-primary rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">ز</span>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="w-8 h-8 bg-zawaya-primary rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">{logoText}</span>
+                  </div>
+                  <span className="font-eurostile font-bold text-zawaya-primary text-lg">
+                    {language === "ar" ? "زوايا" : "Zawaya"}
+                  </span>
                 </div>
               </Link>
               <button
@@ -126,7 +174,7 @@ export default function Header() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 ${
+                      className={`-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50 hover:text-zawaya-primary ${
                         language === "ar" ? "font-ge-ss" : "font-eurostile"
                       }`}
                       onClick={() => setMobileMenuOpen(false)}
@@ -139,7 +187,9 @@ export default function Header() {
                   <Button
                     variant="outline"
                     onClick={toggleLanguage}
-                    className="flex items-center space-x-2 space-x-reverse w-full bg-transparent"
+                    className={`flex items-center space-x-2 space-x-reverse w-full bg-transparent border-zawaya-primary text-zawaya-primary hover:bg-zawaya-primary hover:text-white ${
+                      language === "ar" ? "font-ge-ss" : "font-eurostile"
+                    }`}
                   >
                     <Globe className="h-4 w-4" />
                     <span>{language === "ar" ? "English" : "العربية"}</span>
