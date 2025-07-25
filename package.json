@@ -3,10 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "lint": "next lint",
-    "start": "next start"
+    "type-check": "tsc --noEmit",
+    "lint:fix": "next lint --fix",
+    "test-db": "node scripts/setup-supabase.js",
+    "test-api": "curl -s http://localhost:3000/api/test-supabase | json_pp || curl -s http://localhost:3000/api/test-supabase",
+    "test-routes": "node -e \"const routes=['/',''/ar/articles','/ar/podcast','/ar/programs','/ar/documentaries']; routes.forEach(r => console.log('Testing:', r))\"",
+    "copy-placeholders": "node -e \"const fs=require('fs'); const path='public/images/episodes'; if(!fs.existsSync(path)) fs.mkdirSync(path, {recursive:true}); ['geopolitics','ai_culture','digital_literature','islamic_art'].forEach(f => {try{fs.copyFileSync('public/placeholder.jpg', `${path}/${f}.png`)}catch(e){console.log('File exists or error:', f)}})\"",
+    "db:health": "curl -s http://localhost:3000/api/test-supabase",
+    "db:setup": "node scripts/setup-supabase.js",
+    "admin:open": "open http://localhost:3000/admin || start http://localhost:3000/admin"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
