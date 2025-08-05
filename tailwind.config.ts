@@ -25,15 +25,35 @@ const config = {
     },
     extend: {
       colors: {
-        // Official Zawaya Brand Tokens
+        // Zawaya Semantic Color Tokens
+        ink: {
+          900: colors["ink-900"],
+          700: colors["ink-700"],
+          600: colors["ink-600"],
+        },
+        sand: {
+          50: colors["sand-50"],
+        },
+        stone: {
+          200: colors["stone-200"],
+          600: colors["stone-600"],
+        },
+        brand: {
+          green: colors["brand-green"],
+          red: colors["brand-red"],
+          yellow: colors["brand-yellow"],
+          orange: colors["brand-orange"],
+          mint: colors["brand-mint"],
+          violet: colors["brand-violet"],
+        },
+        
+        // Legacy Zawaya colors (for backward compatibility)
         "clr-primary-dark": colors["primary-dark"],
         "clr-accent": colors.accent,
         "clr-iris": colors.iris,
         "clr-orange": colors.orange,
         "clr-menthol": colors.menthol,
         "clr-naples": colors.naples,
-        
-        // Legacy Zawaya colors (for backward compatibility)
         "zawaya-primary": colors.primary,
         "zawaya-accent": colors.accent,
         "zawaya-iris": colors.iris,
@@ -106,7 +126,16 @@ const config = {
         'video': '16/9',
       },
       backgroundImage: {
+        // Editorial gradients
+        'cedar-mist': 'linear-gradient(140deg, #1E3E39 0%, #0D2A27 60%)',
+        'sands-dusk': 'linear-gradient(180deg, #FAF7F0 0%, #F6F9F8 100%)',
+        'iris-signal': 'linear-gradient(90deg, #644BD2 0%, #BEF0B4 100%)',
+        // Legacy
         "geometric-pattern": "url('/pattern.png')",
+      },
+      boxShadow: {
+        // Soft, airy shadows
+        card: '0 6px 20px rgba(13, 42, 39, 0.06)',
       },
       transitionDuration: {
         'default': motion.duration,
@@ -115,6 +144,10 @@ const config = {
         'default': motion.easing,
       },
       borderRadius: {
+        // Design system radii
+        xl: '16px',        // Cards
+        '2xl': '20px',     // Feature elements
+        // Legacy
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",

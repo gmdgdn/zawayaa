@@ -88,3 +88,102 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Zawaya Design System Utilities */
+@layer utilities {
+  /* Modern Arabic Typography - IBM Plex Sans Arabic */
+  html[lang="ar"] {
+    font-family: "IBM Plex Sans Arabic", Cairo, system-ui, sans-serif;
+  }
+  
+  html[lang="en"] {
+    font-family: "IBM Plex Sans", Inter, system-ui, sans-serif;
+  }
+  
+  /* Typography Hierarchy */
+  .text-headline {
+    font-family: "IBM Plex Sans Arabic", Cairo, system-ui, sans-serif;
+    font-weight: 700; /* Bold */
+  }
+  
+  .text-subheading {
+    font-family: "IBM Plex Sans Arabic", Cairo, system-ui, sans-serif;
+    font-weight: 500; /* Medium */
+  }
+  
+  .text-body {
+    font-family: "IBM Plex Sans Arabic", Cairo, system-ui, sans-serif;
+    font-weight: 400; /* Regular */
+  }
+  
+  /* Outline-style stroked titles - removed to avoid hydration issues */
+  
+  /* Angular image masks - Zawaya angles theme */
+  .mask-angle {
+    clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  }
+  
+  /* Stroked headlines for editorial impact */
+  .h1-stroke {
+    -webkit-text-stroke: 2px currentColor;
+    color: transparent;
+  }
+  
+  /* Category color coding */
+  .category-politics {
+    @apply text-brand-red border-brand-red;
+  }
+  
+  .category-analysis {
+    @apply text-brand-green border-brand-green;
+  }
+  
+  .category-culture {
+    @apply text-brand-violet border-brand-violet;
+  }
+  
+  .category-history {
+    @apply text-brand-orange border-brand-orange;
+  }
+  
+  .category-tech {
+    @apply text-brand-violet border-brand-violet;
+  }
+  
+  .category-documentary {
+    @apply text-brand-yellow border-brand-yellow;
+  }
+  
+  .category-podcast-audio {
+    @apply text-brand-mint border-brand-mint;
+  }
+  
+  .category-podcast-video {
+    @apply text-brand-orange border-brand-orange;
+  }
+  
+  /* Mobile tap interactions */
+  @media (hover: none) and (pointer: coarse) {
+    .tap-scale:active {
+      transform: scale(0.97);
+    }
+  }
+  
+  /* Button hover lift */
+  .btn-lift {
+    transition: all 0.2s ease-out;
+  }
+  
+  .btn-lift:hover {
+    transform: translateY(-1px);
+  }
+  
+  /* Editorial spacing */
+  .section-spacing {
+    @apply py-16 lg:py-20;
+  }
+  
+  .content-spacing {
+    @apply space-y-6 lg:space-y-8;
+  }
+}

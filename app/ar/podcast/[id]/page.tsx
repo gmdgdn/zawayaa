@@ -1,78 +1,99 @@
 "use client"
 
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Clock, User, ArrowRight, Heart, Share2, Download, Headphones, Play } from "lucide-react"
+import { Calendar, Clock, User, ArrowRight, Heart, Share2, Download, Headphones, Play, Loader2 } from "lucide-react"
 import Link from "next/link"
 import EnhancedAudioPlayer from "@/components/enhanced-audio-player"
 
-// Sample podcast episodes data
-const getPodcastById = (id: string) => {
-  const episodes = {
-    "ep-001": {
-      id: "ep-001",
-      title_ar: "الذكاء الاصطناعي والثقافة العربية: تحديات الهوية في العصر الرقمي",
-      show_name: "شمال جنوب",
-      host: "فريق زوايا التحريري",
-      guest: "د. أحمد الخيري - خبير في تقنيات الذكاء الاصطناعي",
-      description: "حوار معمق حول تأثير الذكاء الاصطناعي على الثقافة والهوية العربية، والتحديات التي تواجه المنطقة في عصر التحول الرقمي. نناقش كيف يمكن للعالم العربي أن يستفيد من هذه التقنيات مع الحفاظ على خصوصيته الثقافية.",
-      published_date: "2025-01-22",
-      duration: "52:30",
-      audio_url: "/audio/ep-001.mp3",
-      transcript: `[00:00] مقدمة البرنامج
-[02:15] تعريف بالضيف
-[05:30] الذكاء الاصطناعي: الفرص والتحديات
-[15:45] التأثير على اللغة العربية
-[28:20] الهوية الثقافية في العصر الرقمي
-[38:10] مستقبل التعليم العربي
-[45:30] توصيات للمؤسسات العربية
-[50:15] خاتمة وشكر للضيف`,
-      tags: ["تكنولوجيا", "ثقافة", "هوية", "ذكاء اصطناعي"],
-      image_url: "/images/episodes/ai_culture.png",
-      show_description: "برنامج حواري أسبوعي يناقش القضايا المعاصرة من منظور عربي",
-      episode_number: 12,
-      season: 2
-    },
-    "ep-002": {
-      id: "ep-002",
-      title_ar: "الفن الإسلامي في العصر الحديث: بين الأصالة والمعاصرة",
-      show_name: "عبق التاريخ",
-      host: "د. ليلى حسن",
-      guest: "الفنان محمد السعيد",
-      description: "رحلة في عالم الفن الإسلامي المعاصر، نكتشف كيف يوازن الفنانون المسلمون بين التراث الأصيل والتعبير المعاصر. حوار مع الفنان محمد السعيد حول تجربته في دمج الخط العربي مع الفنون الحديثة.",
-      published_date: "2025-01-20",
-      duration: "45:15",
-      audio_url: "/audio/ep-002.mp3",
-      transcript: "",
-      tags: ["فن", "تراث", "خط عربي", "حداثة"],
-      image_url: "/images/episodes/islamic_art.png",
-      show_description: "برنامج يستكشف التاريخ والتراث العربي الإسلامي",
-      episode_number: 8,
-      season: 1
-    }
+interface PodcastEpisode {
+  id: string
+  title_ar: string
+  description_ar?: string
+  episode_number: number
+  season_number: number
+  duration: number
+  audio_url?: string
+  thumbnail_url?: string
+  view_count: number
+  like_count: number
+  published_at: string
+  program: {
+    id: string
+    title_ar: string
+    description_ar?: string
+    host_ar?: string
+    type: string
   }
-  
-  return episodes[id as keyof typeof episodes] || null
 }
 
 export default function PodcastEpisodePage() {
   const params = useParams()
-  const episode = getPodcastById(params.id as string)
+  const [episode, setEpisode] = useState<PodcastEpisode | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  if (!episode) {
+  useEffect(() => {
+    const fetchEpisode = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/episodes/${params.id}`)
+        const result = await response.json()
+        
+        if (result.success) {
+          setEpisode(result.data)
+        } else {
+          setError(result.error || 'الحلقة غير موجودة')
+        }
+      } catch (err) {
+        setError('خطأ في تحميل الحلقة')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchEpisode()
+    }
+  }, [params.id])
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">الحلقة غير موجودة</h1>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>جاري تحميل الحلقة...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !episode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">{error || 'الحلقة غير موجودة'}</h1>
           <Link href="/ar/podcast">
             <Button>العودة إلى البودكاست</Button>
           </Link>
         </div>
       </div>
     )
+  }
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
   }
 
   return (
@@ -100,7 +121,7 @@ export default function PodcastEpisodePage() {
                     بودكاست
                   </Badge>
                   <span className="text-gray-600 font-ge-ss">
-                    {episode.show_name} • الحلقة {episode.episode_number}
+                    {episode.program.title_ar} • الحلقة {episode.episode_number}
                   </span>
                 </div>
 
@@ -113,23 +134,23 @@ export default function PodcastEpisodePage() {
                 <div className="flex flex-wrap items-center gap-6 text-gray-600">
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <User className="w-5 h-5" />
-                    <span className="font-ge-ss">{episode.host}</span>
+                    <span className="font-ge-ss">{episode.program.host_ar || 'فريق زوايا'}</span>
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Calendar className="w-5 h-5" />
-                    <span className="font-ge-ss">{new Date(episode.published_date).toLocaleDateString('ar-SA')}</span>
+                    <span className="font-ge-ss">{new Date(episode.published_at).toLocaleDateString('ar-SA')}</span>
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Clock className="w-5 h-5" />
-                    <span className="font-ge-ss">{episode.duration}</span>
+                    <span className="font-ge-ss">{formatDuration(episode.duration)}</span>
                   </div>
                 </div>
 
                 {/* Episode Image */}
-                {episode.image_url && (
+                {episode.thumbnail_url && (
                   <div className="aspect-video rounded-lg overflow-hidden">
                     <img 
-                      src={episode.image_url} 
+                      src={episode.thumbnail_url} 
                       alt={episode.title_ar}
                       className="w-full h-full object-cover"
                     />
@@ -146,9 +167,9 @@ export default function PodcastEpisodePage() {
                   tracks={[{
                     id: episode.id,
                     title: episode.title_ar,
-                    author: episode.host,
-                    src: episode.audio_url,
-                    duration: episode.duration
+                    author: episode.program.host_ar || 'فريق زوايا',
+                    src: episode.audio_url || '',
+                    duration: formatDuration(episode.duration)
                   }]}
                   currentTrackIndex={0}
                   autoPlay={false}
@@ -162,30 +183,12 @@ export default function PodcastEpisodePage() {
               <div className="space-y-4">
                 <h3 className="text-xl font-bold font-ge-ss">وصف الحلقة</h3>
                 <p className="text-gray-800 font-ge-ss leading-reading">
-                  {episode.description}
+                  {episode.description_ar || 'لا يوجد وصف متاح لهذه الحلقة.'}
                 </p>
-                {episode.guest && (
-                  <div className="bg-gray-100 p-4 rounded-lg">
-                    <h4 className="font-bold font-ge-ss mb-2">ضيف الحلقة:</h4>
-                    <p className="text-gray-700 font-ge-ss">{episode.guest}</p>
-                  </div>
-                )}
               </div>
             </Card>
 
-            {/* Transcript */}
-            {episode.transcript && (
-              <Card className="p-6">
-                <div className="space-y-4">
-                  <h3 className="text-xl font-bold font-ge-ss">محتويات الحلقة</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <pre className="whitespace-pre-wrap text-gray-700 font-ge-ss text-sm leading-relaxed">
-                      {episode.transcript}
-                    </pre>
-                  </div>
-                </div>
-              </Card>
-            )}
+
           </div>
 
           {/* Sidebar */}
@@ -194,32 +197,20 @@ export default function PodcastEpisodePage() {
             <Card className="p-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-bold font-ge-ss">عن البرنامج</h3>
-                <h4 className="text-xl font-bold text-clr-iris font-ge-ss">{episode.show_name}</h4>
+                <h4 className="text-xl font-bold text-clr-iris font-ge-ss">{episode.program.title_ar}</h4>
                 <p className="text-gray-600 font-ge-ss leading-relaxed">
-                  {episode.show_description}
+                  {episode.program.description_ar || 'برنامج من إنتاج زوايا'}
                 </p>
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback>{episode.host.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{(episode.program.host_ar || 'ز').charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <span className="font-ge-ss text-gray-700">{episode.host}</span>
+                  <span className="font-ge-ss text-gray-700">{episode.program.host_ar || 'فريق زوايا'}</span>
                 </div>
               </div>
             </Card>
 
-            {/* Tags */}
-            <Card className="p-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-bold font-ge-ss">العلامات</h3>
-                <div className="flex flex-wrap gap-2">
-                  {episode.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="badge border-gray-600 text-gray-600 font-ge-ss">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </Card>
+
 
             {/* Actions */}
             <Card className="p-6">

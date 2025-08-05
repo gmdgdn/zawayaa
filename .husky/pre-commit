@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run TypeScript type checking
+echo "🔍 Running TypeScript type check..."
+npm run type-check
+
+# Run linting
+echo "🧹 Running ESLint..."
+npm run lint
+
+# Run tests
+echo "🧪 Running tests..."
+npm test
+
+echo "✅ Pre-commit checks passed!" 

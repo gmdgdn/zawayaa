@@ -1,0 +1,653 @@
+[
+  {
+    "key": "group_zawaya_articles",
+    "title": "Zawaya - Article Arabic Content",
+    "fields": [
+      {
+        "key": "field_title_arabic",
+        "label": "Arabic Title",
+        "name": "title_arabic",
+        "type": "text",
+        "instructions": "Article title in Arabic",
+        "required": 1,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_excerpt_arabic",
+        "label": "Arabic Excerpt",
+        "name": "excerpt_arabic",
+        "type": "textarea",
+        "instructions": "Brief description in Arabic",
+        "rows": 3,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_content_arabic",
+        "label": "Arabic Content",
+        "name": "content_arabic",
+        "type": "wysiwyg",
+        "instructions": "Full article content in Arabic (if different from main content)",
+        "tabs": "all",
+        "toolbar": "full",
+        "media_upload": 1
+      },
+      {
+        "key": "field_audio_narration_url",
+        "label": "Audio Narration URL",
+        "name": "audio_narration_url",
+        "type": "url",
+        "instructions": "URL to Arabic audio narration",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_audio_duration",
+        "label": "Audio Duration (seconds)",
+        "name": "audio_duration",
+        "type": "number",
+        "instructions": "Duration of audio narration in seconds",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_reading_time_minutes",
+        "label": "Reading Time (minutes)",
+        "name": "reading_time_minutes",
+        "type": "number",
+        "instructions": "Estimated reading time in minutes",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_article_type",
+        "label": "Article Type",
+        "name": "article_type",
+        "type": "select",
+        "choices": {
+          "opinion": "Opinion",
+          "news": "News",
+          "analysis": "Analysis",
+          "interview": "Interview",
+          "review": "Review"
+        },
+        "default_value": "opinion",
+        "wrapper": {"width": "33"}
+      },
+      {
+        "key": "field_is_featured",
+        "label": "Featured Article",
+        "name": "is_featured",
+        "type": "true_false",
+        "instructions": "Show in featured articles section",
+        "wrapper": {"width": "33"}
+      },
+      {
+        "key": "field_is_breaking_news",
+        "label": "Breaking News",
+        "name": "is_breaking_news",
+        "type": "true_false",
+        "instructions": "Mark as breaking news",
+        "wrapper": {"width": "34"}
+      },
+      {
+        "key": "field_author_arabic_name",
+        "label": "Author Arabic Name",
+        "name": "author_arabic_name",
+        "type": "text",
+        "instructions": "Author name in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_author_bio_arabic",
+        "label": "Author Bio Arabic",
+        "name": "author_bio_arabic",
+        "type": "textarea",
+        "instructions": "Author biography in Arabic",
+        "rows": 2,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_meta_description_arabic",
+        "label": "Meta Description (Arabic)",
+        "name": "meta_description_arabic",
+        "type": "textarea",
+        "instructions": "SEO meta description in Arabic",
+        "rows": 2,
+        "maxlength": 160,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_meta_description_english",
+        "label": "Meta Description (English)",
+        "name": "meta_description_english",
+        "type": "textarea",
+        "instructions": "SEO meta description in English",
+        "rows": 2,
+        "maxlength": 160,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_keywords_arabic",
+        "label": "Keywords (Arabic)",
+        "name": "keywords_arabic",
+        "type": "text",
+        "instructions": "Comma-separated keywords in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_keywords_english",
+        "label": "Keywords (English)",
+        "name": "keywords_english",
+        "type": "text",
+        "instructions": "Comma-separated keywords in English",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_social_sharing_image",
+        "label": "Social Sharing Image",
+        "name": "social_sharing_image",
+        "type": "image",
+        "instructions": "Custom image for social media sharing",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_category_color",
+        "label": "Category Color",
+        "name": "category_color",
+        "type": "color_picker",
+        "instructions": "Color for this article's category",
+        "default_value": "#6366f1",
+        "wrapper": {"width": "50"}
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "post_type",
+          "operator": "==",
+          "value": "post"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label"
+  },
+  {
+    "key": "group_zawaya_programs",
+    "title": "Zawaya - Program Details",
+    "fields": [
+      {
+        "key": "field_program_supabase_id",
+        "label": "Supabase Program ID",
+        "name": "program_supabase_id",
+        "type": "text",
+        "instructions": "UUID from Supabase programs table",
+        "readonly": 1,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_program_type",
+        "label": "Program Type",
+        "name": "program_type",
+        "type": "select",
+        "choices": {
+          "video": "Video",
+          "audio": "Audio/Podcast",
+          "mixed": "Mixed Media"
+        },
+        "default_value": "video",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_host_arabic",
+        "label": "Host (Arabic)",
+        "name": "host_arabic",
+        "type": "text",
+        "instructions": "Program host name in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_host_english",
+        "label": "Host (English)",
+        "name": "host_english",
+        "type": "text",
+        "instructions": "Program host name in English",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_episode_count",
+        "label": "Episode Count",
+        "name": "episode_count",
+        "type": "number",
+        "instructions": "Total number of episodes",
+        "readonly": 1,
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_average_duration",
+        "label": "Average Duration (minutes)",
+        "name": "average_duration",
+        "type": "number",
+        "instructions": "Average episode duration in minutes",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_subscriber_count",
+        "label": "Subscriber Count",
+        "name": "subscriber_count",
+        "type": "number",
+        "instructions": "Number of program subscribers",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_program_rating",
+        "label": "Program Rating",
+        "name": "program_rating",
+        "type": "number",
+        "instructions": "Program rating (0-5)",
+        "min": 0,
+        "max": 5,
+        "step": 0.1,
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_cover_image",
+        "label": "Cover Image",
+        "name": "cover_image",
+        "type": "image",
+        "instructions": "Program cover image (16:9 ratio recommended)",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_trailer_video",
+        "label": "Trailer Video URL",
+        "name": "trailer_video",
+        "type": "url",
+        "instructions": "URL to program trailer video",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_theme_color",
+        "label": "Theme Color",
+        "name": "theme_color",
+        "type": "color_picker",
+        "instructions": "Brand color for this program",
+        "default_value": "#6366f1",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_launch_date",
+        "label": "Launch Date",
+        "name": "launch_date",
+        "type": "date_picker",
+        "instructions": "Program launch date",
+        "display_format": "d/m/Y",
+        "return_format": "Y-m-d",
+        "wrapper": {"width": "50"}
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "post_type",
+          "operator": "==",
+          "value": "program"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default"
+  },
+  {
+    "key": "group_zawaya_episodes",
+    "title": "Zawaya - Episode Details",
+    "fields": [
+      {
+        "key": "field_episode_supabase_id",
+        "label": "Supabase Episode ID",
+        "name": "episode_supabase_id",
+        "type": "text",
+        "instructions": "UUID from Supabase episodes table",
+        "readonly": 1,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_program_reference",
+        "label": "Program",
+        "name": "program_reference",
+        "type": "post_object",
+        "instructions": "Select the program this episode belongs to",
+        "post_type": ["program"],
+        "return_format": "object",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_episode_number",
+        "label": "Episode Number",
+        "name": "episode_number",
+        "type": "number",
+        "instructions": "Episode number in the series",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_season_number",
+        "label": "Season Number",
+        "name": "season_number",
+        "type": "number",
+        "instructions": "Season number",
+        "default_value": 1,
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_duration_seconds",
+        "label": "Duration (seconds)",
+        "name": "duration_seconds",
+        "type": "number",
+        "instructions": "Episode duration in seconds",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_view_count",
+        "label": "View Count",
+        "name": "view_count",
+        "type": "number",
+        "instructions": "Number of views",
+        "readonly": 1,
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_video_embed_url",
+        "label": "Video URL",
+        "name": "video_embed_url",
+        "type": "url",
+        "instructions": "YouTube, Vimeo, or direct video URL",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_audio_file_url",
+        "label": "Audio URL",
+        "name": "audio_file_url",
+        "type": "url",
+        "instructions": "Direct audio file URL or streaming link",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_episode_thumbnail",
+        "label": "Episode Thumbnail",
+        "name": "episode_thumbnail",
+        "type": "image",
+        "instructions": "Thumbnail image for this episode",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_episode_poster",
+        "label": "Episode Poster",
+        "name": "episode_poster",
+        "type": "image",
+        "instructions": "High-quality poster image",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_transcript_arabic",
+        "label": "Transcript (Arabic)",
+        "name": "transcript_arabic",
+        "type": "wysiwyg",
+        "instructions": "Full episode transcript in Arabic",
+        "tabs": "visual",
+        "toolbar": "basic"
+      },
+      {
+        "key": "field_transcript_english",
+        "label": "Transcript (English)",
+        "name": "transcript_english",
+        "type": "wysiwyg",
+        "instructions": "Full episode transcript in English",
+        "tabs": "visual",
+        "toolbar": "basic"
+      },
+      {
+        "key": "field_episode_gallery",
+        "label": "Episode Gallery",
+        "name": "episode_gallery",
+        "type": "gallery",
+        "instructions": "Additional images from this episode",
+        "return_format": "url"
+      },
+      {
+        "key": "field_episode_tags_arabic",
+        "label": "Tags (Arabic)",
+        "name": "episode_tags_arabic",
+        "type": "text",
+        "instructions": "Comma-separated tags in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_scheduled_publish",
+        "label": "Scheduled Publish",
+        "name": "scheduled_publish",
+        "type": "date_time_picker",
+        "instructions": "Schedule this episode for future publication",
+        "display_format": "d/m/Y g:i a",
+        "return_format": "Y-m-d H:i:s",
+        "wrapper": {"width": "50"}
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "post_type",
+          "operator": "==",
+          "value": "episode"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default"
+  },
+  {
+    "key": "group_zawaya_authors",
+    "title": "Zawaya - Author Arabic Profile",
+    "fields": [
+      {
+        "key": "field_author_supabase_id",
+        "label": "Supabase Author ID",
+        "name": "author_supabase_id",
+        "type": "text",
+        "instructions": "UUID from Supabase authors table",
+        "readonly": 1,
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_name_arabic",
+        "label": "Name (Arabic)",
+        "name": "name_arabic",
+        "type": "text",
+        "instructions": "Author name in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_bio_arabic",
+        "label": "Bio (Arabic)",
+        "name": "bio_arabic",
+        "type": "wysiwyg",
+        "instructions": "Author biography in Arabic",
+        "tabs": "visual",
+        "toolbar": "basic"
+      },
+      {
+        "key": "field_job_title_arabic",
+        "label": "Job Title (Arabic)",
+        "name": "job_title_arabic",
+        "type": "text",
+        "instructions": "Professional title in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_job_title_english",
+        "label": "Job Title (English)",
+        "name": "job_title_english",
+        "type": "text",
+        "instructions": "Professional title in English",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_author_avatar",
+        "label": "Author Avatar",
+        "name": "author_avatar",
+        "type": "image",
+        "instructions": "Profile picture (square format recommended)",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_author_cover_image",
+        "label": "Cover Image",
+        "name": "author_cover_image",
+        "type": "image",
+        "instructions": "Cover image for author profile",
+        "return_format": "url",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_location_arabic",
+        "label": "Location (Arabic)",
+        "name": "location_arabic",
+        "type": "text",
+        "instructions": "Author location in Arabic",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_location_english",
+        "label": "Location (English)",
+        "name": "location_english",
+        "type": "text",
+        "instructions": "Author location in English",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_expertise_areas",
+        "label": "Expertise Areas",
+        "name": "expertise_areas",
+        "type": "checkbox",
+        "choices": {
+          "politics": "Politics",
+          "culture": "Culture",
+          "technology": "Technology",
+          "economy": "Economy",
+          "sports": "Sports",
+          "art": "Art",
+          "literature": "Literature",
+          "science": "Science"
+        },
+        "layout": "horizontal"
+      },
+      {
+        "key": "field_languages_spoken",
+        "label": "Languages Spoken",
+        "name": "languages_spoken",
+        "type": "checkbox",
+        "choices": {
+          "arabic": "Arabic",
+          "english": "English",
+          "french": "French",
+          "spanish": "Spanish",
+          "german": "German"
+        },
+        "layout": "horizontal"
+      },
+      {
+        "key": "field_experience_years",
+        "label": "Years of Experience",
+        "name": "experience_years",
+        "type": "number",
+        "instructions": "Professional experience in years",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_is_verified_author",
+        "label": "Verified Author",
+        "name": "is_verified_author",
+        "type": "true_false",
+        "instructions": "Mark as verified author",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_is_featured_author",
+        "label": "Featured Author",
+        "name": "is_featured_author",
+        "type": "true_false",
+        "instructions": "Show in featured authors section",
+        "wrapper": {"width": "25"}
+      },
+      {
+        "key": "field_social_media_links",
+        "label": "Social Media Links",
+        "name": "social_media_links",
+        "type": "repeater",
+        "instructions": "Add social media profiles",
+        "sub_fields": [
+          {
+            "key": "field_social_platform",
+            "label": "Platform",
+            "name": "platform",
+            "type": "select",
+            "choices": {
+              "twitter": "Twitter",
+              "facebook": "Facebook",
+              "instagram": "Instagram",
+              "linkedin": "LinkedIn",
+              "youtube": "YouTube",
+              "tiktok": "TikTok"
+            },
+            "wrapper": {"width": "30"}
+          },
+          {
+            "key": "field_social_url",
+            "label": "URL",
+            "name": "url",
+            "type": "url",
+            "wrapper": {"width": "70"}
+          }
+        ],
+        "min": 0,
+        "max": 10,
+        "layout": "table",
+        "button_label": "Add Social Link"
+      },
+      {
+        "key": "field_personal_website",
+        "label": "Personal Website",
+        "name": "personal_website",
+        "type": "url",
+        "instructions": "Author's personal website or blog",
+        "wrapper": {"width": "50"}
+      },
+      {
+        "key": "field_author_keywords",
+        "label": "Author Keywords",
+        "name": "author_keywords",
+        "type": "text",
+        "instructions": "SEO keywords for author profile",
+        "wrapper": {"width": "50"}
+      }
+    ],
+    "location": [
+      [
+        {
+          "param": "user_form",
+          "operator": "==",
+          "value": "edit"
+        }
+      ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "timestamp": "2025-08-05T16:00:30.417Z",
+  "overall": "warning",
+  "healthPercentage": 50,
+  "checks": {
+    "wordpress": {
+      "status": "healthy",
+      "statusCode": 200,
+      "responseTime": "unknown",
+      "message": "WordPress API accessible"
+    },
+    "application": {
+      "status": "error",
+      "message": "Application unreachable: fetch failed"
+    },
+    "revalidation": {
+      "status": "error",
+      "message": "Revalidation endpoint error: fetch failed"
+    },
+    "environment": {
+      "status": "healthy",
+      "missing": [],
+      "message": "All required environment variables configured"
+    }
+  }
+}

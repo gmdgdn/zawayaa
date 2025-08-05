@@ -1,67 +1,85 @@
 "use client"
 
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Calendar, Clock, User, ArrowRight, Heart, Share2, Download, Video, Play, Eye } from "lucide-react"
+import { Calendar, Clock, User, ArrowRight, Heart, Share2, Download, Video, Play, Eye, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState, useRef } from "react"
+import { useState as useVideoState, useRef } from "react"
 
-// Sample program episodes data
-const getProgramById = (id: string) => {
-  const episodes = {
-    "prog-001": {
-      id: "prog-001",
-      title_ar: "نافذة على العالم: اليابان بين التقليد والحداثة",
-      program_name: "حضارة الشرق",
-      host: "محمد الحكيم",
-      description: "رحلة استكشافية في الثقافة اليابانية المعاصرة وكيف تمكنت من الحفاظ على تراثها مع احتضان الحداثة. نزور معابد كيوتو القديمة ومختبرات طوكيو المستقبلية لنفهم سر هذا التوازن الفريد.",
-      published_date: "2025-01-18",
-      duration: "30:15",
-      views: 15420,
-      video_url: "/placeholder-video.mp4",
-      thumbnail: "/images/programs/japan_culture.png",
-      tags: ["ثقافة", "اليابان", "تراث", "حداثة"],
-      category: "وثائقي ثقافي",
-      episode_number: 5,
-      season: 2,
-      program_description: "سلسلة وثائقية تستكشف حضارات الشرق وتأثيرها على العالم المعاصر"
-    },
-    "prog-002": {
-      id: "prog-002",
-      title_ar: "طريق الحرير الرقمي: كيف تعيد التكنولوجيا ربط القارات؟",
-      program_name: "شمال جنوب",
-      host: "د. سارا العلي",
-      description: "تحليل معمق للمبادرات التكنولوجية الصينية الجديدة وتأثيرها على طرق التجارة العالمية. نناقش مشروع طريق الحرير الرقمي ودوره في إعادة تشكيل الجغرافيا الاقتصادية العالمية.",
-      published_date: "2025-01-15",
-      duration: "45:30",
-      views: 23100,
-      video_url: "/placeholder-video.mp4",
-      thumbnail: "/images/programs/digital_silk_road.png",
-      tags: ["تكنولوجيا", "اقتصاد", "الصين", "طريق الحرير"],
-      category: "تحليل اقتصادي",
-      episode_number: 8,
-      season: 1,
-      program_description: "برنامج تحليلي يناقش القضايا الجيوسياسية والاقتصادية المعاصرة"
-    }
+interface Episode {
+  id: string
+  title_ar: string
+  description_ar?: string
+  episode_number: number
+  season_number: number
+  duration: number
+  video_url?: string
+  audio_url?: string
+  thumbnail_url?: string
+  view_count: number
+  like_count: number
+  published_at: string
+  program: {
+    id: string
+    title_ar: string
+    description_ar?: string
+    host_ar?: string
+    type: string
   }
-  
-  return episodes[id as keyof typeof episodes] || null
 }
 
 export default function ProgramEpisodePage() {
   const params = useParams()
-  const episode = getProgramById(params.id as string)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const [episode, setEpisode] = useState<Episode | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isPlaying, setIsPlaying] = useVideoState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  if (!episode) {
+  useEffect(() => {
+    const fetchEpisode = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch(`/api/episodes/${params.id}`)
+        const result = await response.json()
+        
+        if (result.success) {
+          setEpisode(result.data)
+        } else {
+          setError(result.error || 'الحلقة غير موجودة')
+        }
+      } catch (err) {
+        setError('خطأ في تحميل الحلقة')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (params.id) {
+      fetchEpisode()
+    }
+  }, [params.id])
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">الحلقة غير موجودة</h1>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>جاري تحميل الحلقة...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !episode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">{error || 'الحلقة غير موجودة'}</h1>
           <Link href="/ar/programs">
             <Button>العودة إلى البرامج</Button>
           </Link>
@@ -90,6 +108,17 @@ export default function ProgramEpisodePage() {
     return views.toString()
   }
 
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
+  }
+
   return (
     <div className="min-h-screen bg-gray-50" dir="rtl">
       <div className="content-container py-8">
@@ -111,7 +140,7 @@ export default function ProgramEpisodePage() {
                 <video
                   ref={videoRef}
                   className="w-full h-full object-cover"
-                  poster={episode.thumbnail}
+                  poster={episode.thumbnail_url}
                   onPlay={() => setIsPlaying(true)}
                   onPause={() => setIsPlaying(false)}
                   controls
@@ -131,7 +160,7 @@ export default function ProgramEpisodePage() {
                     برنامج
                   </Badge>
                   <span className="text-gray-600 font-ge-ss">
-                    {episode.program_name} • الحلقة {episode.episode_number}
+                    {episode.program.title_ar} • الحلقة {episode.episode_number}
                   </span>
                 </div>
 
@@ -144,19 +173,19 @@ export default function ProgramEpisodePage() {
                 <div className="flex flex-wrap items-center gap-6 text-gray-600 border-b border-gray-200 pb-6">
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <User className="w-5 h-5" />
-                    <span className="font-ge-ss">{episode.host}</span>
+                    <span className="font-ge-ss">{episode.program.host_ar || 'فريق زوايا'}</span>
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Calendar className="w-5 h-5" />
-                    <span className="font-ge-ss">{new Date(episode.published_date).toLocaleDateString('ar-SA')}</span>
+                    <span className="font-ge-ss">{new Date(episode.published_at).toLocaleDateString('ar-SA')}</span>
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Clock className="w-5 h-5" />
-                    <span className="font-ge-ss">{episode.duration}</span>
+                    <span className="font-ge-ss">{formatDuration(episode.duration)}</span>
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Eye className="w-5 h-5" />
-                    <span className="font-ge-ss">{formatViews(episode.views)} مشاهدة</span>
+                    <span className="font-ge-ss">{formatViews(episode.view_count)} مشاهدة</span>
                   </div>
                 </div>
 
@@ -164,20 +193,8 @@ export default function ProgramEpisodePage() {
                 <div className="space-y-4">
                   <h3 className="text-xl font-bold font-ge-ss">وصف الحلقة</h3>
                   <p className="text-gray-800 font-ge-ss leading-reading">
-                    {episode.description}
+                    {episode.description_ar || 'لا يوجد وصف متاح لهذه الحلقة.'}
                   </p>
-                </div>
-
-                {/* Tags */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold font-ge-ss">العلامات</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {episode.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="badge border-gray-600 text-gray-600 font-ge-ss">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
                 </div>
 
                 {/* Actions */}
@@ -207,15 +224,15 @@ export default function ProgramEpisodePage() {
             <Card className="p-6">
               <div className="space-y-4">
                 <h3 className="text-lg font-bold font-ge-ss">عن البرنامج</h3>
-                <h4 className="text-xl font-bold text-clr-iris font-ge-ss">{episode.program_name}</h4>
+                <h4 className="text-xl font-bold text-clr-iris font-ge-ss">{episode.program.title_ar}</h4>
                 <p className="text-gray-600 font-ge-ss leading-relaxed">
-                  {episode.program_description}
+                  {episode.program.description_ar || 'برنامج من إنتاج زوايا'}
                 </p>
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback>{episode.host.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{(episode.program.host_ar || 'ز').charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <span className="font-ge-ss text-gray-700">{episode.host}</span>
+                  <span className="font-ge-ss text-gray-700">{episode.program.host_ar || 'فريق زوايا'}</span>
                 </div>
               </div>
             </Card>
@@ -227,19 +244,19 @@ export default function ProgramEpisodePage() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600 font-ge-ss">المشاهدات:</span>
-                    <span className="font-bold font-ge-ss">{formatViews(episode.views)}</span>
+                    <span className="font-bold font-ge-ss">{formatViews(episode.view_count)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 font-ge-ss">المدة:</span>
-                    <span className="font-bold font-ge-ss">{episode.duration}</span>
+                    <span className="font-bold font-ge-ss">{formatDuration(episode.duration)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 font-ge-ss">الفئة:</span>
-                    <span className="font-bold font-ge-ss">{episode.category}</span>
+                    <span className="text-gray-600 font-ge-ss">النوع:</span>
+                    <span className="font-bold font-ge-ss">{episode.program.type === 'video' ? 'فيديو' : episode.program.type === 'audio' ? 'صوتي' : 'مختلط'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 font-ge-ss">الموسم:</span>
-                    <span className="font-bold font-ge-ss">الموسم {episode.season}</span>
+                    <span className="font-bold font-ge-ss">الموسم {episode.season_number}</span>
                   </div>
                 </div>
               </div>
@@ -250,7 +267,7 @@ export default function ProgramEpisodePage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-bold font-ge-ss">تصفح المزيد</h3>
                 <p className="text-gray-100 font-ge-ss">
-                  اكتشف حلقات أخرى من {episode.program_name} والبرامج المشابهة
+                  اكتشف حلقات أخرى من {episode.program.title_ar} والبرامج المشابهة
                 </p>
                 <Link href="/ar/programs">
                   <Button variant="secondary" className="w-full">
