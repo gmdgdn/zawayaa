@@ -121,7 +121,7 @@ export function AudioPlayer({
     const audio = audioRef.current
     if (!audio) return
 
-    const rates = [0.75, 1, 1.25, 1.5, 2]
+    const rates = [1, 1.25, 1.5, 2, 0.75]
     const currentIndex = rates.indexOf(playbackRate)
     const nextRate = rates[(currentIndex + 1) % rates.length]
     
