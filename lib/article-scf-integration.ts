@@ -4,9 +4,6 @@
  */
 
 import { 
-  ArticleCardProps, 
-  ArticleDetailProps, 
-  ArticleListProps,
   transformToArticleCard,
   transformToArticleDetail,
   createArticleListProps,
@@ -17,6 +14,66 @@ import {
 } from './scf-mappings/article-mappings'
 import { NormalizedWPPost, transformWordPressPosts } from './wordpress-transformers'
 import { wpGet } from './wordpress'
+
+// Article component prop types
+export type ArticleCardProps = {
+  id: number
+  slug: string
+  title: string
+  excerpt: string
+  href: string
+  image?: string
+  readTime?: number
+  categoryColor?: string
+  featured?: boolean
+  audioUrl?: string
+  publishedAt: string
+  author: {
+    name: string
+    avatar?: string
+  }
+}
+
+export type ArticleDetailProps = {
+  id: number
+  slug: string
+  title: string
+  content: string
+  excerpt: string
+  authorName: string
+  authorBio?: string
+  audioUrl?: string
+  audioDuration?: number
+  readTime?: number
+  categoryColor?: string
+  socialImage?: string
+  publishedAt: string
+  modifiedAt: string
+  featured?: boolean
+  breakingNews?: boolean
+  seo: {
+    title: string
+    description: string
+    keywords?: string
+    image?: string
+  }
+}
+
+export type ArticleListProps = {
+  articles: ArticleCardProps[]
+  pagination: {
+    currentPage: number
+    totalPages: number
+    totalItems: number
+    hasNext: boolean
+    hasPrev: boolean
+  }
+  filters?: {
+    category?: string
+    featured?: boolean
+    search?: string
+  }
+}
 
 // Article fetching options
 export interface ArticleFetchOptions {
@@ -429,7 +486,7 @@ export async function prefetchArticleData(slug: string): Promise<void> {
 }
 
 // Export all functions and types
-export {
+export type {
   ArticleCardProps,
   ArticleDetailProps,
   ArticleListProps,

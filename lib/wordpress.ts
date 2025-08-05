@@ -181,7 +181,8 @@ export class WordPressClient {
         if (error instanceof WordPressError) {
           if (error.type === WordPressErrorType.AUTH_ERROR || 
               error.type === WordPressErrorType.NOT_FOUND ||
-              error.type === WordPressErrorType.VALIDATION_ERROR) {
+              error.type === WordPressErrorType.VALIDATION_ERROR ||
+              (error.statusCode && error.statusCode < 500)) {
             throw error
           }
         }
@@ -375,8 +376,8 @@ export class WordPressClient {
           return this.getFallbackData<T>(path)
           
         case WordPressErrorType.NOT_FOUND:
-          console.log('WordPress endpoint not found, returning null')
-          return null as unknown as T
+          console.log('WordPress endpoint not found, returning empty data')
+          return this.getFallbackData<T>(path)
           
         case WordPressErrorType.AUTH_ERROR:
           console.error('WordPress authentication failed - check credentials')
@@ -393,9 +394,9 @@ export class WordPressClient {
    * Provide appropriate fallback data based on endpoint type
    */
   private getFallbackData<T>(path: string): T {
-    // For list endpoints, return empty array
-    if (path.includes('posts') && (path.includes('?') || path === '/posts')) {
-      return [] as unknown as T
+    // For list endpoints (programs, episodes, posts), return empty array with proper structure
+    if (path.includes('program') || path.includes('episode') || path.includes('posts')) {
+      return { data: [], headers: {} } as unknown as T
     }
     
     // For single item endpoints, return null

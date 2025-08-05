@@ -293,6 +293,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Add program-specific revalidation
+    if (body.content_type === 'program' || body.paths?.some(p => p.startsWith('/ar/programs'))) {
+      pathsToRevalidate.push('/ar/programs')
+    }
+
     // If content type and ID are provided, use smart revalidation
     if (body.content_type && (body.content_id || body.content_slug)) {
       const smartResult = smartRevalidate(
@@ -414,11 +419,15 @@ export async function POST(request: NextRequest) {
       errors: results.errors
     })
     
+    const duration = Date.now() - startTime
+    
     // Return success response
     return NextResponse.json({
       success: true,
-      revalidated: results,
-      timestamp: new Date().toISOString()
+      revalidated: results.paths,
+      now: Date.now(),
+      timestamp: new Date().toISOString(),
+      duration
     })
     
   } catch (error) {

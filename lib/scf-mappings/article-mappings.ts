@@ -33,7 +33,7 @@ export const ARTICLE_SCF_FIELDS = {
 } as const
 
 // Article component prop interfaces
-export interface ArticleCardProps {
+export type ArticleCardProps = {
   id: number
   slug: string
   title: string
@@ -51,7 +51,7 @@ export interface ArticleCardProps {
   }
 }
 
-export interface ArticleDetailProps {
+export type ArticleDetailProps = {
   id: number
   slug: string
   title: string
@@ -76,7 +76,7 @@ export interface ArticleDetailProps {
   }
 }
 
-export interface ArticleListProps {
+export type ArticleListProps = {
   articles: ArticleCardProps[]
   pagination: {
     currentPage: number
@@ -332,3 +332,6 @@ export function getArticleRevalidationPaths(post: NormalizedWPPost): string[] {
   
   return paths
 }
+
+// Re-export types for better compatibility
+export type { ArticleCardProps, ArticleDetailProps, ArticleListProps }

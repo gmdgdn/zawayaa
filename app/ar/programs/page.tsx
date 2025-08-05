@@ -7,6 +7,8 @@ import { getProgramTypeDisplayName } from "@/lib/scf-mappings/program-mappings"
 import Link from "next/link"
 import Image from "next/image"
 
+export const revalidate = 60 * 5 // 5 minutes
+
 const typeIcons = {
   video: Video,
   audio: Headphones,
