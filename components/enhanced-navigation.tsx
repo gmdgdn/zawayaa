@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+
 interface NavigationItem {
   href: string
   label: string
@@ -32,7 +33,7 @@ export default function EnhancedNavigation({ currentPath = "/" }: EnhancedNaviga
 
   const navigationItems: NavigationItem[] = [
     { 
-      href: "/", 
+      href: "/ar", 
       label: "الرئيسية", 
       icon: Home,
       key: "home" 
@@ -101,7 +102,7 @@ export default function EnhancedNavigation({ currentPath = "/" }: EnhancedNaviga
         <div className="flex items-center justify-between h-16">
           {/* Logo - Right side for RTL */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-3 space-x-reverse group">
+            <Link href="/ar" className="flex items-center space-x-3 space-x-reverse group">
               <div className="w-10 h-10 bg-clr-accent rounded-lg flex items-center justify-center group-hover:bg-clr-accent/90 transition-default">
                 <span className="text-white font-bold text-xl font-eurostile">ز</span>
               </div>
@@ -173,15 +174,6 @@ export default function EnhancedNavigation({ currentPath = "/" }: EnhancedNaviga
 
           {/* Right side - Search and Mobile Menu */}
           <div className="flex items-center space-x-4 space-x-reverse">
-            {/* Language Switch */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-white hover:text-clr-accent hover:bg-white/10 hidden md:flex items-center space-x-1 space-x-reverse"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-sm font-ge-ss">EN</span>
-            </Button>
 
             {/* Search */}
             <div className="relative">

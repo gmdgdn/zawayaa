@@ -1,64 +1,31 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request: req,
-  })
+  const pathname = req.nextUrl.pathname
+  
+  // Skip middleware for API routes and static files
+  const isApiRoute = pathname.startsWith('/api')
+  const isStaticFile = pathname.includes('.') || pathname.startsWith('/_next')
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return req.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => req.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request: req,
-          })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
+  // Handle locale redirection for non-API routes
+  if (!isApiRoute && !isStaticFile) {
+    // If accessing root, redirect to Arabic locale
+    if (pathname === '/') {
+      const url = req.nextUrl.clone()
+      url.pathname = '/ar'
+      return NextResponse.redirect(url)
     }
-  )
-
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession()
-
-  // Protect admin routes
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!session) {
-      // Redirect to login page if not authenticated
-      const redirectUrl = req.nextUrl.clone()
-      redirectUrl.pathname = '/admin/login'
-      redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
-
-    // Check if user has admin role
-    if (session.user) {
-      const { data: profile } = await supabase
-        .from('authors')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
-        // Redirect to unauthorized page if not admin/editor
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/admin/unauthorized'
-        return NextResponse.redirect(redirectUrl)
-      }
+    
+    // If not already under /ar and not a special route, redirect to /ar
+    if (!pathname.startsWith('/ar') && pathname !== '/favicon.ico') {
+      const url = req.nextUrl.clone()
+      url.pathname = `/ar${pathname}`
+      return NextResponse.redirect(url)
     }
   }
 
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {

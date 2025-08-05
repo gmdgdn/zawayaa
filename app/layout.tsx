@@ -4,6 +4,7 @@ import "./globals.css"
 import EnhancedNavigation from "@/components/enhanced-navigation"
 import EnhancedFooter from "@/components/enhanced-footer"
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/lib/language-context"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -28,8 +29,12 @@ export const metadata: Metadata = {
     title: "زوايا | Zawaya",
     description: "القصة من كل زواياها",
   },
-  viewport: "width=device-width, initial-scale=1",
   robots: "index, follow",
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -40,20 +45,22 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${inter.variable} font-ge-ss antialiased`} suppressHydrationWarning>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-        >
-          <div className="min-h-screen flex flex-col bg-white">
-            <EnhancedNavigation />
-            <main className="flex-1">
-              {children}
-            </main>
-            <EnhancedFooter />
-          </div>
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
+            <div className="min-h-screen flex flex-col bg-white">
+              <EnhancedNavigation />
+              <main className="flex-1">
+                {children}
+              </main>
+              <EnhancedFooter />
+            </div>
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

@@ -1,7 +1,8 @@
-// Core content types for Zawaya platform
+// Core content types for Zawaya platform (WordPress-compatible)
+// For WordPress API-specific types, see ./wordpress-types.ts
 
 export interface Author {
-  id: string
+  id: number // WordPress uses numeric IDs
   name: string
   bio?: string
   avatar?: string
@@ -21,7 +22,7 @@ export interface Author {
 }
 
 export interface Category {
-  id: string
+  id: number // WordPress uses numeric IDs
   name_ar: string
   name_en?: string
   slug: string
@@ -34,7 +35,7 @@ export interface Category {
 }
 
 export interface Article {
-  id: string
+  id: number // WordPress uses numeric IDs
   slug: string
   author: Author
   category: Category
@@ -62,7 +63,7 @@ export interface Article {
 }
 
 export interface Program {
-  id: string
+  id: number // WordPress uses numeric IDs
   slug: string
   type: 'video' | 'audio' | 'mixed'
   title_ar: string
@@ -84,7 +85,7 @@ export interface Program {
 }
 
 export interface PodcastEpisode {
-  id: string
+  id: number // WordPress uses numeric IDs
   program: Program
   title_ar: string
   description_ar?: string
@@ -111,7 +112,7 @@ export interface PodcastEpisode {
 }
 
 export interface Documentary {
-  id: string
+  id: number // WordPress uses numeric IDs
   title_ar: string
   title_en?: string
   synopsis_ar: string
@@ -131,7 +132,7 @@ export interface Documentary {
 }
 
 export interface NewsletterSubscription {
-  id: string
+  id: number // WordPress uses numeric IDs
   name: string
   email: string
   topics?: string[]
@@ -142,7 +143,7 @@ export interface NewsletterSubscription {
 }
 
 export interface GuestSubmission {
-  id: string
+  id: number // WordPress uses numeric IDs
   name: string
   email: string
   phone?: string
@@ -177,7 +178,7 @@ export interface ContentFilters {
 }
 
 export interface SearchResult {
-  id: string
+  id: number // WordPress uses numeric IDs
   type: 'article' | 'podcast' | 'program' | 'documentary'
   title: string
   summary: string

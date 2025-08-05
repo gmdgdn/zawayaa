@@ -9,13 +9,17 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "lint:fix": "next lint --fix",
-    "test-db": "node scripts/setup-supabase.js",
-    "test-api": "curl -s http://localhost:3000/api/test-supabase | json_pp || curl -s http://localhost:3000/api/test-supabase",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "test-routes": "node -e \"const routes=['/',''/ar/articles','/ar/podcast','/ar/programs','/ar/documentaries']; routes.forEach(r => console.log('Testing:', r))\"",
     "copy-placeholders": "node -e \"const fs=require('fs'); const path='public/images/episodes'; if(!fs.existsSync(path)) fs.mkdirSync(path, {recursive:true}); ['geopolitics','ai_culture','digital_literature','islamic_art'].forEach(f => {try{fs.copyFileSync('public/placeholder.jpg', `${path}/${f}.png`)}catch(e){console.log('File exists or error:', f)}})\"",
-    "db:health": "curl -s http://localhost:3000/api/test-supabase",
-    "db:setup": "node scripts/setup-supabase.js",
-    "admin:open": "open http://localhost:3000/admin || start http://localhost:3000/admin"
+    "prepare": "husky install",
+    "monitor:health": "node monitoring/health-checks/wordpress-health.js",
+    "monitor:performance": "node monitoring/performance/wordpress-performance.js",
+    "monitor:dashboard": "node monitoring/dashboard.js",
+    "monitor:alerts": "node monitoring/alerts/alert-system.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -46,8 +50,6 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2",
     "@tailwindcss/typography": "^0.5.16",
     "@tiptap/extension-character-count": "^3.0.7",
     "@tiptap/extension-color": "^3.0.7",
@@ -71,6 +73,7 @@
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "next-intl": "^4.3.4",
     "next-themes": "latest",
     "react": "^19",
     "react-day-picker": "latest",
@@ -86,11 +89,32 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
+    "happy-dom": "^18.0.1",
+    "husky": "^8.0.3",
+    "jest-axe": "^10.0.0",
+    "jsdom": "^26.1.0",
+    "lint-staged": "^15.2.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   }
 }
