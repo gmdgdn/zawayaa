@@ -5,6 +5,8 @@ import EnhancedNavigation from "@/components/enhanced-navigation"
 import EnhancedFooter from "@/components/enhanced-footer"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/lib/language-context"
+import { StickyMediaProvider } from "@/context/StickyMediaContext"
+import { StickyMediaPlayer } from "@/components/StickyMediaPlayer"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -45,22 +47,25 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <body className={`${inter.variable} font-ge-ss antialiased`} suppressHydrationWarning>
-        <LanguageProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem={false}
-            disableTransitionOnChange
-          >
-            <div className="min-h-screen flex flex-col bg-white">
-              <EnhancedNavigation />
-              <main className="flex-1">
-                {children}
-              </main>
-              <EnhancedFooter />
-            </div>
-          </ThemeProvider>
-        </LanguageProvider>
+        <StickyMediaProvider>
+          <LanguageProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem={false}
+              disableTransitionOnChange
+            >
+              <div className="min-h-screen flex flex-col bg-white">
+                <EnhancedNavigation />
+                <main className="flex-1">
+                  {children}
+                </main>
+                <EnhancedFooter />
+              </div>
+              <StickyMediaPlayer />
+            </ThemeProvider>
+          </LanguageProvider>
+        </StickyMediaProvider>
       </body>
     </html>
   )

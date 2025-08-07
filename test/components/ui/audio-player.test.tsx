@@ -114,6 +114,8 @@ describe('AudioPlayer - Arabic Audio Playback', () => {
       
       // Wait for metadata to load
       await waitFor(() => {
+        const timeElements = screen.getAllByText('0:00')
+        expect(timeElements.length).toBeGreaterThan(0)
         expect(screen.getByTestId('current-time')).toHaveTextContent('0:00')
         expect(screen.getByTestId('duration-time')).toHaveTextContent('3:00')
       })
@@ -166,14 +168,8 @@ describe('AudioPlayer - Arabic Audio Playback', () => {
       await waitFor(() => {
         const progressSlider = screen.getAllByRole('slider')[0] // First slider is progress
         
-        // Use pointer events for Radix slider
-        const thumb = progressSlider.querySelector('[role="slider"]')
-        if (thumb) {
-          // Simulate seeking to 50%
-          fireEvent.pointerDown(thumb, { pointerId: 1 })
-          thumb.setAttribute('aria-valuenow', '50')
-          fireEvent.pointerUp(thumb, { pointerId: 1 })
-        }
+        // Use input event for slider value changes
+        fireEvent.input(progressSlider, { target: { value: 50 } })
         
         expect(mockAudio.currentTime).toBe(90) // 50% of 180 seconds
       })
@@ -245,13 +241,8 @@ describe('AudioPlayer - Arabic Audio Playback', () => {
         // Volume slider is the second slider
         const volumeSlider = screen.getAllByRole('slider')[1]
         
-        // Use pointer events for Radix slider
-        const thumb = volumeSlider.querySelector('[role="slider"]')
-        if (thumb) {
-          fireEvent.pointerDown(thumb, { pointerId: 1 })
-          thumb.setAttribute('aria-valuenow', '75')
-          fireEvent.pointerUp(thumb, { pointerId: 1 })
-        }
+        // Use input event for slider value changes
+        fireEvent.input(volumeSlider, { target: { value: 75 } })
         
         expect(mockAudio.volume).toBe(0.75)
       })
@@ -496,12 +487,7 @@ describe('AudioPlayer - Arabic Audio Playback', () => {
       await waitFor(() => {
         // Try to seek beyond 100%
         const progressSlider = screen.getAllByRole('slider')[0]
-        const thumb = progressSlider.querySelector('[role="slider"]')
-        if (thumb) {
-          fireEvent.pointerDown(thumb, { pointerId: 1 })
-          thumb.setAttribute('aria-valuenow', '150')
-          fireEvent.pointerUp(thumb, { pointerId: 1 })
-        }
+        fireEvent.input(progressSlider, { target: { value: 150 } })
         
         // Should clamp to maximum duration
         expect(mockAudio.currentTime).toBeLessThanOrEqual(180)
@@ -517,15 +503,11 @@ describe('AudioPlayer - Arabic Audio Playback', () => {
         
         if (thumb) {
           // Test volume at 0 (should mute)
-          fireEvent.pointerDown(thumb, { pointerId: 1 })
-          thumb.setAttribute('aria-valuenow', '0')
-          fireEvent.pointerUp(thumb, { pointerId: 1 })
+          fireEvent.input(volumeSlider, { target: { value: 0 } })
           expect(mockAudio.volume).toBe(0)
           
           // Test volume at 100
-          fireEvent.pointerDown(thumb, { pointerId: 1 })
-          thumb.setAttribute('aria-valuenow', '100')
-          fireEvent.pointerUp(thumb, { pointerId: 1 })
+          fireEvent.input(volumeSlider, { target: { value: 100 } })
           expect(mockAudio.volume).toBe(1)
         }
       })

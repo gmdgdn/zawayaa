@@ -1,14 +1,14 @@
 /**
- * Cache Revalidation API Endpoint
+ * Enhanced Cache Revalidation API Endpoint
+ * Combines comprehensive error handling with SCF-aware intelligent revalidation
  * Handles WordPress webhook requests to invalidate Next.js cache
- * Supports both path-based and tag-based revalidation
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { CacheManager, smartRevalidate, cascadeRevalidate, emergencyCacheClear } from '@/lib/cache-manager'
+import { CacheManager } from '@/lib/cache-manager'
 import { 
-  RevalidationLogger, 
+  RevalidationLogger,
   RevalidationEventType, 
   logRevalidationEvent, 
   logRevalidationError,
@@ -24,16 +24,20 @@ import {
 // Revalidation secret for security
 const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'zawaya-revalidate-secret-2024'
 
-// Interface for webhook payload (extended for SCF support)
+// Enhanced interface for webhook payload (supports both simple and SCF modes)
 interface RevalidationPayload {
   secret: string
+  // Simple mode (backward compatibility)
+  tag?: string
+  path?: string
+  // SCF mode (advanced features)
   paths?: string[]
   tags?: string[]
   content_type?: 'post' | 'program' | 'episode' | 'user' | 'category'
   content_id?: number
   content_slug?: string
   action?: 'publish' | 'update' | 'delete' | 'featured_toggle' | 'emergency_clear'
-  cascade?: boolean // Whether to trigger cascade revalidation
+  cascade?: boolean
   // SCF-specific fields
   changed_fields?: string[]
   field_changes?: Record<string, {
@@ -42,124 +46,307 @@ interface RevalidationPayload {
     change_type: string
   }>
   priority?: 'high' | 'normal' | 'low'
-  batch_payloads?: SCFRevalidationPayload[] // For batch processing
+  batch_payloads?: SCFRevalidationPayload[]
 }
 
-// Content type to path mapping
-const getPathsForContentType = (contentType: string, contentId: number, action: string): string[] => {
-  const paths: string[] = []
-  
-  switch (contentType) {
-    case 'post':
-      paths.push('/ar') // Homepage
-      paths.push('/ar/articles') // Articles list
-      if (contentId) {
-        // We'd need to fetch the slug, but for now use a pattern
-        paths.push(`/ar/articles/*`) // Individual article (wildcard)
-      }
-      break
-      
-    case 'program':
-      paths.push('/ar') // Homepage (if featured)
-      paths.push('/ar/programs') // Programs list
-      if (contentId) {
-        paths.push(`/ar/programs/*`) // Individual program
-      }
-      break
-      
-    case 'episode':
-      paths.push('/ar/programs') // Programs list (episode counts)
-      if (contentId) {
-        paths.push(`/ar/episodes/*`) // Individual episode
-        paths.push(`/ar/programs/*`) // Parent program page
-      }
-      break
-      
-    case 'user':
-      paths.push('/ar') // Homepage (if featured author)
-      paths.push('/ar/authors') // Authors list
-      if (contentId) {
-        paths.push(`/ar/authors/*`) // Individual author
-      }
-      break
-  }
-  
-  // For featured content toggles, always revalidate homepage
-  if (action === 'featured_toggle') {
-    paths.push('/ar')
-  }
-  
-  return paths
+// Enhanced response interfaces
+interface ErrorResponse {
+  error: string
+  message: string
+  timestamp: string
+  requestId: string
+  duration?: number
+  details?: Record<string, any>
 }
 
-// Content type to cache tags mapping
-const getTagsForContentType = (contentType: string, contentId: number): string[] => {
-  const tags: string[] = []
+interface SuccessResponse {
+  success: true
+  revalidated: {
+    paths: string[]
+    tags: string[]
+  }
+  timestamp: string
+  duration: number
+  requestId: string
+  mode: 'simple' | 'scf' | 'batch' | 'emergency'
+  metrics?: {
+    pathsCount: number
+    tagsCount: number
+    errorsCount: number
+  }
+}
+
+// Rate limiting storage with enhanced tracking
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 20 // Increased for SCF batch operations
+
+// Enhanced monitoring metrics
+const metrics = {
+  totalRequests: 0,
+  successfulRequests: 0,
+  failedRequests: 0,
+  rateLimitedRequests: 0,
+  unauthorizedRequests: 0,
+  badRequests: 0,
+  serverErrors: 0,
+  scfRequests: 0,
+  batchRequests: 0,
+  emergencyClears: 0,
+  averageResponseTime: 0,
+  pathsRevalidated: 0,
+  tagsRevalidated: 0
+}
+
+// Enhanced utility functions
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const key = ip
+  const record = rateLimitStore.get(key)
   
-  switch (contentType) {
-    case 'post':
-      tags.push('articles')
-      if (contentId) {
-        tags.push(`article:${contentId}`)
-      }
-      break
-      
-    case 'program':
-      tags.push('programs')
-      if (contentId) {
-        tags.push(`program:${contentId}`)
-      }
-      break
-      
-    case 'episode':
-      tags.push('episodes')
-      if (contentId) {
-        tags.push(`episode:${contentId}`)
-        // Also invalidate parent program
-        tags.push('programs')
-      }
-      break
-      
-    case 'user':
-      tags.push('authors')
-      if (contentId) {
-        tags.push(`author:${contentId}`)
-      }
-      break
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW })
+    return true
   }
   
-  return tags
+  if (record.count >= RATE_LIMIT_MAX_REQUESTS) {
+    return false
+  }
+  
+  record.count++
+  return true
+}
+
+function updateMetrics(requestId: string, duration?: number): void {
+  if (duration) {
+    const total = metrics.averageResponseTime * (metrics.successfulRequests - 1)
+    metrics.averageResponseTime = (total + duration) / metrics.successfulRequests
+  }
+  
+  // Log enhanced metrics
+  logRevalidationEvent(
+    RevalidationEventType.REQUEST_RECEIVED,
+    'Metrics updated',
+    {
+      totalRequests: metrics.totalRequests,
+      successfulRequests: metrics.successfulRequests,
+      failedRequests: metrics.failedRequests,
+      successRate: metrics.totalRequests > 0 ? 
+        (metrics.successfulRequests / metrics.totalRequests * 100).toFixed(2) + '%' : '0%',
+      averageResponseTime: metrics.averageResponseTime,
+      scfRequests: metrics.scfRequests,
+      batchRequests: metrics.batchRequests
+    }
+  )
+}
+
+function createErrorResponse(
+  error: string,
+  message: string,
+  requestId: string,
+  duration?: number,
+  details?: Record<string, any>
+): ErrorResponse {
+  return {
+    error,
+    message,
+    timestamp: new Date().toISOString(),
+    requestId,
+    ...(duration !== undefined && { duration }),
+    ...(details && { details })
+  }
+}
+
+function createSuccessResponse(
+  revalidated: { paths: string[]; tags: string[] },
+  requestId: string,
+  duration: number,
+  mode: 'simple' | 'scf' | 'batch' | 'emergency'
+): SuccessResponse {
+  return {
+    success: true,
+    revalidated,
+    timestamp: new Date().toISOString(),
+    duration,
+    requestId,
+    mode,
+    metrics: {
+      pathsCount: revalidated.paths.length,
+      tagsCount: revalidated.tags.length,
+      errorsCount: 0
+    }
+  }
+}
+
+function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+}
+
+function validatePayload(body: RevalidationPayload): { valid: boolean; error?: string } {
+  // Secret validation
+  if (!body.secret) {
+    return { valid: false, error: 'Missing authentication token' }
+  }
+  
+  if (body.secret !== REVALIDATION_SECRET) {
+    return { valid: false, error: 'Invalid authentication token' }
+  }
+  
+  // Mode validation
+  const hasSimpleMode = body.tag || body.path
+  const hasSCFMode = body.content_type || body.paths || body.tags
+  const hasBatchMode = body.batch_payloads && body.batch_payloads.length > 0
+  
+  if (!hasSimpleMode && !hasSCFMode && !hasBatchMode && body.action !== 'emergency_clear') {
+    return { valid: false, error: 'Missing revalidation parameters' }
+  }
+  
+  // SCF mode validation
+  if (body.content_type && !['post', 'program', 'episode', 'user', 'category'].includes(body.content_type)) {
+    return { valid: false, error: 'Invalid content type' }
+  }
+  
+  // Tag/path format validation
+  if (body.tag && (typeof body.tag !== 'string' || body.tag.length === 0 || body.tag.length > 200)) {
+    return { valid: false, error: 'Invalid tag format' }
+  }
+  
+  if (body.path && (typeof body.path !== 'string' || body.path.length === 0 || body.path.length > 200)) {
+    return { valid: false, error: 'Invalid path format' }
+  }
+  
+  // Security validation for malicious characters
+  const invalidChars = /[<>\"'&]/
+  if (body.tag && invalidChars.test(body.tag)) {
+    return { valid: false, error: 'Tag contains invalid characters' }
+  }
+  
+  if (body.path && invalidChars.test(body.path)) {
+    return { valid: false, error: 'Path contains invalid characters' }
+  }
+  
+  return { valid: true }
 }
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
+  const requestId = generateRequestId()
+  const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
+  const userAgent = request.headers.get('user-agent') || 'unknown'
+  
+  // Increment total requests counter
+  metrics.totalRequests++
+  
+  // Log request received with enhanced context
+  logRevalidationEvent(
+    RevalidationEventType.REQUEST_RECEIVED,
+    'Revalidation request received',
+    {
+      ip: clientIP,
+      userAgent,
+      requestId,
+      requestNumber: metrics.totalRequests
+    }
+  )
   
   try {
-    // Log request received
-    logRevalidationEvent(
-      RevalidationEventType.REQUEST_RECEIVED,
-      'Revalidation request received',
-      { userAgent: request.headers.get('user-agent') }
-    )
-
-    // Parse the request body
-    const body: RevalidationPayload = await request.json()
-    
-    // Validate the secret token
-    if (body.secret !== REVALIDATION_SECRET) {
+    // Rate limiting protection with enhanced logging
+    if (!checkRateLimit(clientIP)) {
+      metrics.rateLimitedRequests++
+      metrics.failedRequests++
+      
+      const duration = Date.now() - startTime
+      
       logRevalidationError(
         RevalidationEventType.VALIDATION_FAILED,
-        'Invalid revalidation secret provided',
-        new Error('Authentication failed'),
-        { hasSecret: !!body.secret }
+        'Rate limit exceeded',
+        new Error('Too many requests'),
+        {
+          ip: clientIP,
+          duration,
+          rateLimitedRequests: metrics.rateLimitedRequests
+        }
       )
       
       return NextResponse.json(
-        { error: 'Invalid secret' },
-        { status: 401 }
+        createErrorResponse(
+          'Too Many Requests',
+          'Rate limit exceeded. Please try again later.',
+          requestId,
+          duration,
+          { rateLimitWindow: RATE_LIMIT_WINDOW, maxRequests: RATE_LIMIT_MAX_REQUESTS }
+        ),
+        { status: 429 }
       )
     }
 
+    // Parse and validate the request body
+    let body: RevalidationPayload
+    try {
+      body = await request.json()
+      
+      logRevalidationEvent(
+        RevalidationEventType.REQUEST_RECEIVED,
+        'Request body parsed successfully',
+        {
+          hasSecret: !!body.secret,
+          hasTag: !!body.tag,
+          hasPath: !!body.path,
+          hasSCFMode: !!(body.content_type || body.paths || body.tags),
+          hasBatchMode: !!(body.batch_payloads && body.batch_payloads.length > 0),
+          action: body.action
+        }
+      )
+    } catch (parseError) {
+      metrics.badRequests++
+      metrics.failedRequests++
+      
+      const duration = Date.now() - startTime
+      
+      logRevalidationError(
+        RevalidationEventType.VALIDATION_FAILED,
+        'Failed to parse request body',
+        parseError instanceof Error ? parseError : new Error('JSON parse error'),
+        { duration, badRequests: metrics.badRequests }
+      )
+      
+      return NextResponse.json(
+        createErrorResponse(
+          'Bad Request',
+          'Invalid JSON in request body',
+          requestId,
+          duration
+        ),
+        { status: 400 }
+      )
+    }
+
+    // Enhanced payload validation
+    const validation = validatePayload(body)
+    if (!validation.valid) {
+      metrics.badRequests++
+      metrics.failedRequests++
+      
+      const duration = Date.now() - startTime
+      
+      logRevalidationError(
+        RevalidationEventType.VALIDATION_FAILED,
+        'Payload validation failed',
+        new Error(validation.error!),
+        { duration, badRequests: metrics.badRequests }
+      )
+      
+      return NextResponse.json(
+        createErrorResponse(
+          validation.error!.includes('authentication') ? 'Unauthorized' : 'Bad Request',
+          validation.error!,
+          requestId,
+          duration
+        ),
+        { status: validation.error!.includes('authentication') ? 401 : 400 }
+      )
+    }
+    
     // Log revalidation started
     logRevalidationEvent(
       RevalidationEventType.REVALIDATION_STARTED,
@@ -171,65 +358,87 @@ export async function POST(request: NextRequest) {
         cascade: body.cascade,
         changed_fields: body.changed_fields,
         priority: body.priority,
-        has_batch_payloads: !!body.batch_payloads
+        has_batch_payloads: !!(body.batch_payloads && body.batch_payloads.length > 0)
       }
     )
-    
-    // Collect paths and tags to revalidate
-    let pathsToRevalidate: string[] = body.paths || []
-    let tagsToRevalidate: string[] = body.tags || []
-    
-    // Handle special actions first
+
+    // Handle emergency clear action
     if (body.action === 'emergency_clear') {
+      metrics.emergencyClears++
+      
       logRevalidationEvent(
         RevalidationEventType.EMERGENCY_CLEAR,
         'Emergency cache clear triggered'
       )
       
-      const emergencyResult = emergencyCacheClear()
+      const emergencyResult = CacheManager.emergencyCacheClear()
       const duration = Date.now() - startTime
+      
+      metrics.successfulRequests++
+      metrics.pathsRevalidated += emergencyResult.paths.length
+      metrics.tagsRevalidated += emergencyResult.tags.length
       
       logRevalidationEvent(
         RevalidationEventType.REVALIDATION_COMPLETED,
         'Emergency cache clear completed',
-        emergencyResult,
+        {
+          pathsCleared: emergencyResult.paths.length,
+          tagsCleared: emergencyResult.tags.length,
+          errors: emergencyResult.errors
+        },
         duration
       )
       
-      return NextResponse.json({
-        success: true,
-        action: 'emergency_clear',
-        revalidated: {
-          paths: emergencyResult.paths,
-          tags: emergencyResult.tags,
-          errors: []
-        },
-        timestamp: new Date().toISOString(),
-        duration
-      })
+      updateMetrics(requestId, duration)
+      
+      return NextResponse.json(
+        createSuccessResponse(
+          {
+            paths: emergencyResult.paths,
+            tags: emergencyResult.tags
+          },
+          requestId,
+          duration,
+          'emergency'
+        )
+      )
     }
-
+    
     // Handle batch SCF revalidation
     if (body.batch_payloads && body.batch_payloads.length > 0) {
+      metrics.batchRequests++
+      
       logRevalidationEvent(
         RevalidationEventType.REVALIDATION_STARTED,
         'Processing batch SCF revalidation',
         { batch_size: body.batch_payloads.length }
       )
-
+      
       const batchResult = await batchProcessSCFRevalidations(body.batch_payloads)
       const report = generateRevalidationReport(batchResult.results)
-
+      const duration = Date.now() - startTime
+      
+      if (batchResult.success) {
+        metrics.successfulRequests++
+      } else {
+        metrics.failedRequests++
+      }
+      
+      metrics.pathsRevalidated += report.summary.totalPaths
+      metrics.tagsRevalidated += report.summary.totalTags
+      
       logRevalidationEvent(
-        RevalidationEventType.REVALIDATION_COMPLETED,
+        batchResult.success ? RevalidationEventType.REVALIDATION_COMPLETED : RevalidationEventType.REVALIDATION_FAILED,
         'Batch SCF revalidation completed',
         report.summary,
-        batchResult.totalDuration
+        duration
       )
-
+      
+      updateMetrics(requestId, duration)
+      
       return NextResponse.json({
         success: batchResult.success,
-        action: 'batch_scf_revalidation',
+        mode: 'batch',
         batch_results: batchResult.results.map(r => ({
           content_type: r.payload.content_type,
           content_id: r.payload.content_id,
@@ -240,12 +449,15 @@ export async function POST(request: NextRequest) {
         })),
         report,
         timestamp: new Date().toISOString(),
-        duration: batchResult.totalDuration
+        duration,
+        requestId
       })
     }
 
     // Handle single SCF revalidation
     if (body.content_type && body.content_id && (body.changed_fields || body.field_changes)) {
+      metrics.scfRequests++
+      
       const scfPayload: SCFRevalidationPayload = {
         secret: body.secret,
         content_type: body.content_type,
@@ -257,7 +469,7 @@ export async function POST(request: NextRequest) {
         cascade: body.cascade,
         priority: body.priority
       }
-
+      
       logRevalidationEvent(
         RevalidationEventType.REVALIDATION_STARTED,
         'Processing SCF-aware revalidation',
@@ -268,9 +480,19 @@ export async function POST(request: NextRequest) {
           priority: body.priority
         }
       )
-
+      
       const scfResult = await processSCFRevalidation(scfPayload)
-
+      const duration = Date.now() - startTime
+      
+      if (scfResult.success) {
+        metrics.successfulRequests++
+      } else {
+        metrics.failedRequests++
+      }
+      
+      metrics.pathsRevalidated += scfResult.revalidated.paths.length
+      metrics.tagsRevalidated += scfResult.revalidated.tags.length
+      
       logRevalidationEvent(
         scfResult.success ? RevalidationEventType.REVALIDATION_COMPLETED : RevalidationEventType.REVALIDATION_FAILED,
         'SCF revalidation completed',
@@ -280,103 +502,173 @@ export async function POST(request: NextRequest) {
           tags_count: scfResult.revalidated.tags.length,
           errors_count: scfResult.errors.length
         },
-        scfResult.duration
+        duration
       )
-
-      return NextResponse.json({
-        success: scfResult.success,
-        action: 'scf_revalidation',
-        revalidated: scfResult.revalidated,
-        errors: scfResult.errors,
-        timestamp: new Date().toISOString(),
-        duration: scfResult.duration
-      })
+      
+      updateMetrics(requestId, duration)
+      
+      return NextResponse.json(
+        createSuccessResponse(
+          scfResult.revalidated,
+          requestId,
+          duration,
+          'scf'
+        )
+      )
     }
 
-    // If content type and ID are provided, use smart revalidation
+    // Handle smart revalidation based on content type
     if (body.content_type && (body.content_id || body.content_slug)) {
-      const smartResult = smartRevalidate(
+      const smartResult = CacheManager.smartRevalidate(
         body.content_type,
         body.action || 'update',
         body.content_slug,
         body.content_id?.toString()
       )
       
-      pathsToRevalidate = [...pathsToRevalidate, ...smartResult.paths]
-      tagsToRevalidate = [...tagsToRevalidate, ...smartResult.tags]
-    } else if (body.content_type && body.content_id) {
-      // Fallback to manual path/tag generation
-      const autoPaths = getPathsForContentType(
-        body.content_type, 
-        body.content_id, 
-        body.action || 'update'
-      )
-      const autoTags = getTagsForContentType(body.content_type, body.content_id)
+      const revalidationResult = { paths: [] as string[], tags: [] as string[] }
+      const errors: string[] = []
       
-      pathsToRevalidate = [...pathsToRevalidate, ...autoPaths]
-      tagsToRevalidate = [...tagsToRevalidate, ...autoTags]
+      // Revalidate paths
+      for (const path of smartResult.paths) {
+        try {
+          revalidatePath(path)
+          revalidationResult.paths.push(path)
+          
+          logRevalidationEvent(
+            RevalidationEventType.PATH_REVALIDATED,
+            `Smart path revalidated: ${path}`
+          )
+        } catch (error) {
+          const errorMsg = `Failed to revalidate path ${path}: ${error}`
+          errors.push(errorMsg)
+          
+          logRevalidationError(
+            RevalidationEventType.REVALIDATION_FAILED,
+            errorMsg,
+            error instanceof Error ? error : new Error(errorMsg),
+            { path, type: 'smart_path_revalidation' }
+          )
+        }
+      }
+      
+      // Revalidate tags with optional cascade
+      for (const tag of smartResult.tags) {
+        try {
+          if (body.cascade) {
+            const cascadedTags = CacheManager.cascadeRevalidate(tag)
+            revalidationResult.tags.push(tag, ...cascadedTags)
+            
+            logRevalidationEvent(
+              RevalidationEventType.CASCADE_TRIGGERED,
+              `Smart cascade revalidation triggered for tag: ${tag}`,
+              { primaryTag: tag, cascadedTags }
+            )
+          } else {
+            revalidateTag(tag)
+            revalidationResult.tags.push(tag)
+            
+            logRevalidationEvent(
+              RevalidationEventType.TAG_REVALIDATED,
+              `Smart tag revalidated: ${tag}`
+            )
+          }
+        } catch (error) {
+          const errorMsg = `Failed to revalidate tag ${tag}: ${error}`
+          errors.push(errorMsg)
+          
+          logRevalidationError(
+            RevalidationEventType.REVALIDATION_FAILED,
+            errorMsg,
+            error instanceof Error ? error : new Error(errorMsg),
+            { tag, type: 'smart_tag_revalidation' }
+          )
+        }
+      }
+      
+      const duration = Date.now() - startTime
+      
+      if (errors.length === 0) {
+        metrics.successfulRequests++
+      } else {
+        metrics.failedRequests++
+      }
+      
+      metrics.pathsRevalidated += revalidationResult.paths.length
+      metrics.tagsRevalidated += revalidationResult.tags.length
+      
+      updateMetrics(requestId, duration)
+      
+      return NextResponse.json(
+        createSuccessResponse(
+          revalidationResult,
+          requestId,
+          duration,
+          'scf'
+        )
+      )
+    }
+
+    // Handle simple mode (backward compatibility)
+    const pathsToRevalidate: string[] = []
+    const tagsToRevalidate: string[] = []
+    
+    if (body.tag) {
+      tagsToRevalidate.push(body.tag)
+    }
+    
+    if (body.path) {
+      pathsToRevalidate.push(body.path)
+    }
+    
+    if (body.paths) {
+      pathsToRevalidate.push(...body.paths)
+    }
+    
+    if (body.tags) {
+      tagsToRevalidate.push(...body.tags)
     }
     
     // Remove duplicates
-    pathsToRevalidate = [...new Set(pathsToRevalidate)]
-    tagsToRevalidate = [...new Set(tagsToRevalidate)]
+    const uniquePaths = [...new Set(pathsToRevalidate)]
+    const uniqueTags = [...new Set(tagsToRevalidate)]
     
-    // Perform revalidation
-    const results = {
-      paths: [] as string[],
-      tags: [] as string[],
-      errors: [] as string[]
-    }
+    const results = { paths: [] as string[], tags: [] as string[] }
+    const errors: string[] = []
     
     // Revalidate paths
-    for (const path of pathsToRevalidate) {
+    for (const path of uniquePaths) {
       try {
-        // Handle wildcard paths by revalidating common patterns
-        if (path.includes('*')) {
-          // For wildcards, we'll revalidate the parent directory
-          const basePath = path.replace('/*', '')
-          revalidatePath(basePath)
-          results.paths.push(basePath)
-          
-          logRevalidationEvent(
-            RevalidationEventType.PATH_REVALIDATED,
-            `Path revalidated (wildcard): ${basePath}`,
-            { originalPath: path, resolvedPath: basePath }
-          )
-        } else {
-          revalidatePath(path)
-          results.paths.push(path)
-          
-          logRevalidationEvent(
-            RevalidationEventType.PATH_REVALIDATED,
-            `Path revalidated: ${path}`
-          )
-        }
+        revalidatePath(path)
+        results.paths.push(path)
+        
+        logRevalidationEvent(
+          RevalidationEventType.PATH_REVALIDATED,
+          `Simple path revalidated: ${path}`
+        )
       } catch (error) {
-        const errorMsg = `Failed to revalidate path ${path}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        const errorMsg = `Failed to revalidate path ${path}: ${error}`
+        errors.push(errorMsg)
         
         logRevalidationError(
           RevalidationEventType.REVALIDATION_FAILED,
           errorMsg,
           error instanceof Error ? error : new Error(errorMsg),
-          { path, type: 'path_revalidation' }
+          { path, type: 'simple_path_revalidation' }
         )
-        
-        results.errors.push(errorMsg)
       }
     }
     
-    // Revalidate tags with optional cascade
-    for (const tag of tagsToRevalidate) {
+    // Revalidate tags
+    for (const tag of uniqueTags) {
       try {
         if (body.cascade) {
-          // Use cascade revalidation for related tags
-          const cascadedTags = cascadeRevalidate(tag)
+          const cascadedTags = CacheManager.cascadeRevalidate(tag)
           results.tags.push(tag, ...cascadedTags)
           
           logRevalidationEvent(
             RevalidationEventType.CASCADE_TRIGGERED,
-            `Cascade revalidation triggered for tag: ${tag}`,
+            `Simple cascade revalidation triggered for tag: ${tag}`,
             { primaryTag: tag, cascadedTags }
           )
         } else {
@@ -385,60 +677,120 @@ export async function POST(request: NextRequest) {
           
           logRevalidationEvent(
             RevalidationEventType.TAG_REVALIDATED,
-            `Tag revalidated: ${tag}`
+            `Simple tag revalidated: ${tag}`
           )
         }
       } catch (error) {
-        const errorMsg = `Failed to revalidate tag ${tag}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        const errorMsg = `Failed to revalidate tag ${tag}: ${error}`
+        errors.push(errorMsg)
         
         logRevalidationError(
           RevalidationEventType.REVALIDATION_FAILED,
           errorMsg,
           error instanceof Error ? error : new Error(errorMsg),
-          { tag, type: 'tag_revalidation' }
+          { tag, type: 'simple_tag_revalidation' }
         )
-        
-        results.errors.push(errorMsg)
       }
     }
     
-    // Log successful revalidation
-    console.log('Cache revalidation completed:', {
-      paths: results.paths,
-      tags: results.tags,
-      content_type: body.content_type,
-      content_id: body.content_id,
-      content_slug: body.content_slug,
-      action: body.action,
-      cascade: body.cascade,
-      errors: results.errors
-    })
+    const duration = Date.now() - startTime
     
-    // Return success response
-    return NextResponse.json({
-      success: true,
-      revalidated: results,
-      timestamp: new Date().toISOString()
-    })
+    if (errors.length === 0) {
+      metrics.successfulRequests++
+    } else {
+      metrics.failedRequests++
+    }
     
-  } catch (error) {
-    console.error('Revalidation API error:', error)
+    metrics.pathsRevalidated += results.paths.length
+    metrics.tagsRevalidated += results.tags.length
+    
+    logRevalidationEvent(
+      errors.length === 0 ? RevalidationEventType.REVALIDATION_COMPLETED : RevalidationEventType.REVALIDATION_FAILED,
+      'Simple revalidation completed',
+      {
+        paths: results.paths,
+        tags: results.tags,
+        errors
+      },
+      duration
+    )
+    
+    updateMetrics(requestId, duration)
     
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      },
+      createSuccessResponse(
+        results,
+        requestId,
+        duration,
+        'simple'
+      )
+    )
+    
+  } catch (error) {
+    metrics.serverErrors++
+    metrics.failedRequests++
+    
+    const duration = Date.now() - startTime
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    logRevalidationError(
+      RevalidationEventType.REVALIDATION_FAILED,
+      'Unexpected revalidation API error',
+      error instanceof Error ? error : new Error(errorMessage),
+      {
+        duration,
+        serverErrors: metrics.serverErrors,
+        requestId
+      }
+    )
+    
+    updateMetrics(requestId, duration)
+    
+    return NextResponse.json(
+      createErrorResponse(
+        'Internal Server Error',
+        errorMessage,
+        requestId,
+        duration
+      ),
       { status: 500 }
     )
   }
 }
 
-// Handle GET requests for testing
+// Enhanced GET endpoint for health check, metrics, and testing
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const secret = searchParams.get('secret')
+  const action = searchParams.get('action')
   
+  // Health check endpoint (no auth required)
+  if (!secret && !action) {
+    const healthStatus = RevalidationLogger.getHealthStatus()
+    const cacheHealth = CacheManager.getCacheHealth()
+    
+    return NextResponse.json({
+      status: 'operational',
+      timestamp: new Date().toISOString(),
+      health: {
+        api: healthStatus.status,
+        cache: cacheHealth.status,
+        details: {
+          ...healthStatus.details,
+          ...cacheHealth.metrics
+        }
+      },
+      endpoints: {
+        POST: 'Send revalidation requests',
+        'GET?secret=xxx': 'Access metrics and admin functions',
+        'GET?secret=xxx&action=logs': 'View recent logs',
+        'GET?secret=xxx&action=clear-logs': 'Clear logs',
+        'GET?secret=xxx&action=reset-metrics': 'Reset metrics'
+      }
+    })
+  }
+  
+  // Protected endpoints require secret
   if (secret !== REVALIDATION_SECRET) {
     return NextResponse.json(
       { error: 'Invalid secret' },
@@ -446,12 +798,79 @@ export async function GET(request: NextRequest) {
     )
   }
   
-  return NextResponse.json({
-    message: 'Revalidation API is working',
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      POST: 'Send revalidation requests',
-      GET: 'Test endpoint status'
-    }
-  })
+  // Handle admin actions
+  switch (action) {
+    case 'metrics':
+      return NextResponse.json({
+        metrics: {
+          ...metrics,
+          successRate: metrics.totalRequests > 0 ? 
+            (metrics.successfulRequests / metrics.totalRequests * 100).toFixed(2) + '%' : '0%'
+        },
+        revalidationMetrics: RevalidationLogger.getMetrics(),
+        rateLimitConfig: {
+          windowMs: RATE_LIMIT_WINDOW,
+          maxRequests: RATE_LIMIT_MAX_REQUESTS
+        },
+        timestamp: new Date().toISOString()
+      })
+      
+    case 'logs':
+      const limit = parseInt(searchParams.get('limit') || '50')
+      const level = searchParams.get('level') as any
+      
+      return NextResponse.json({
+        logs: RevalidationLogger.getLogs(limit, level),
+        errorSummary: RevalidationLogger.getErrorSummary(),
+        timestamp: new Date().toISOString()
+      })
+      
+    case 'clear-logs':
+      RevalidationLogger.clearLogs()
+      return NextResponse.json({
+        message: 'Logs cleared successfully',
+        timestamp: new Date().toISOString()
+      })
+      
+    case 'reset-metrics':
+      RevalidationLogger.resetMetrics()
+      // Reset local metrics too
+      Object.keys(metrics).forEach(key => {
+        if (typeof metrics[key as keyof typeof metrics] === 'number') {
+          (metrics as any)[key] = 0
+        }
+      })
+      
+      return NextResponse.json({
+        message: 'Metrics reset successfully',
+        timestamp: new Date().toISOString()
+      })
+      
+    case 'warm-cache':
+      const warmResult = await CacheManager.warmCriticalCache()
+      return NextResponse.json({
+        message: 'Cache warming completed',
+        result: warmResult,
+        timestamp: new Date().toISOString()
+      })
+      
+    default:
+      return NextResponse.json({
+        message: 'Enhanced Revalidation API is operational',
+        version: '2.0.0',
+        features: [
+          'Simple path/tag revalidation (backward compatible)',
+          'SCF-aware intelligent revalidation',
+          'Batch processing with priority handling',
+          'Cascade revalidation for related content',
+          'Emergency cache clearing',
+          'Comprehensive error handling and logging',
+          'Rate limiting protection',
+          'Performance metrics and monitoring',
+          'Health checks and diagnostics'
+        ],
+        timestamp: new Date().toISOString()
+      })
+  }
 }
+

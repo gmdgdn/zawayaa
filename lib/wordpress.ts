@@ -12,10 +12,14 @@ const WP_API_BASE = process.env.WP_API_BASE || (process.env.NEXT_PUBLIC_WP_URL ?
 const WP_USERNAME = process.env.WP_USERNAME || 'Zawayawp'
 const WP_APP_PASSWORD = process.env.WP_APP_PASSWORD || 'lDLhSBco7QgR3IDuOZQzoY6k'
 
-// REST base names returned by /wp-json/wp/v2/types
-export const WP_ENDPOINTS = {
-  programs: 'program',
-  episodes: 'episode',
+// Cache for REST base names to avoid repeated API calls
+const REST_BASE_CACHE = new Map<string, string>()
+
+// Default REST base mappings (fallback)
+const DEFAULT_REST_BASES = {
+  posts: 'posts',
+  programs: 'programs',
+  episodes: 'episodes',
 } as const
 
 // Validate required environment variables
@@ -158,6 +162,49 @@ export class WordPressClient {
   }
 
   /**
+   * Get the REST base for a content type by querying WordPress /types endpoint
+   * Caches results to avoid repeated API calls
+   */
+  private async getRestBase(contentType: string): Promise<string> {
+    // Check cache first
+    if (REST_BASE_CACHE.has(contentType)) {
+      return REST_BASE_CACHE.get(contentType)!
+    }
+
+    // Use default if available
+    if (contentType in DEFAULT_REST_BASES) {
+      const defaultBase = DEFAULT_REST_BASES[contentType as keyof typeof DEFAULT_REST_BASES]
+      REST_BASE_CACHE.set(contentType, defaultBase)
+      return defaultBase
+    }
+
+    try {
+      // Query WordPress types endpoint to get rest_base
+      const typeInfo = await this.wpGet<{
+        name: string
+        slug: string
+        rest_base: string
+        rest_controller_class: string
+      }>(`/types/${contentType}`, {}, 'static')
+
+      const restBase = typeInfo.rest_base || contentType
+      
+      // Cache the result
+      REST_BASE_CACHE.set(contentType, restBase)
+      
+      console.log(`Cached REST base for ${contentType}: ${restBase}`)
+      return restBase
+      
+    } catch (error) {
+      console.warn(`Failed to get REST base for ${contentType}, using content type as fallback:`, error)
+      
+      // Fallback to content type name
+      REST_BASE_CACHE.set(contentType, contentType)
+      return contentType
+    }
+  }
+
+  /**
    * Exponential backoff retry utility
    */
   private async retryWithBackoff<T>(
@@ -177,8 +224,14 @@ export class WordPressClient {
       } catch (error) {
         lastError = error as Error
         
-        // Don't retry on certain error types
+        // Only retry on server errors (≥500) - don't retry on client errors (4xx)
         if (error instanceof WordPressError) {
+          if (error.statusCode && error.statusCode < 500) {
+            // Client errors (4xx) should not be retried
+            throw error
+          }
+          
+          // Don't retry on specific error types regardless of status code
           if (error.type === WordPressErrorType.AUTH_ERROR || 
               error.type === WordPressErrorType.NOT_FOUND ||
               error.type === WordPressErrorType.VALIDATION_ERROR) {
@@ -191,13 +244,13 @@ export class WordPressClient {
           break
         }
 
-        // Calculate delay with exponential backoff
+        // Calculate delay with exponential backoff (only for server errors ≥500)
         const delay = Math.min(
           baseDelay * Math.pow(backoffMultiplier, attempt),
           maxDelay
         )
 
-        console.log(`WordPress request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`)
+        console.log(`WordPress server error (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms...`)
         
         // Wait before retrying
         await new Promise(resolve => setTimeout(resolve, delay))
@@ -258,8 +311,13 @@ export class WordPressClient {
         case 502:
         case 503:
         case 504:
+        case 505:
+        case 507:
+        case 508:
+        case 510:
+        case 511:
           return new WordPressError(
-            'WordPress server error. Please try again later.',
+            `WordPress server error (${response.status}). Please try again later.`,
             WordPressErrorType.SERVER_ERROR,
             response.status,
             error
@@ -294,14 +352,18 @@ export class WordPressClient {
     retryOptions?: RetryOptions
   ): Promise<T> {
     return this.retryWithBackoff(async () => {
-      // Map plural resource names to singular REST bases
+      // Resolve dynamic REST base for custom post types
       const pathParts = path.split('/')
-      if (pathParts.length > 1) {
-        const resource = pathParts[1] // Get the resource part (e.g., 'programs' from '/programs')
-        const mappedResource = WP_ENDPOINTS[resource as keyof typeof WP_ENDPOINTS] ?? resource
-        if (mappedResource !== resource) {
-          pathParts[1] = mappedResource
-          path = pathParts.join('/')
+      if (pathParts.length > 1 && pathParts[1]) {
+        const contentType = pathParts[1] // Get the resource part (e.g., 'programs' from '/programs')
+        
+        // Skip REST base resolution for built-in WordPress endpoints
+        if (!['types', 'users', 'media', 'comments', 'taxonomies', 'statuses'].includes(contentType)) {
+          const restBase = await this.getRestBase(contentType)
+          if (restBase !== contentType) {
+            pathParts[1] = restBase
+            path = pathParts.join('/')
+          }
         }
       }
       
@@ -348,6 +410,11 @@ export class WordPressClient {
       }
       
       if (!response.ok) {
+        // Handle 404 as non-fatal for list endpoints - return empty arrays
+        if (response.status === 404) {
+          console.log(`WordPress endpoint not found (404): ${url}, returning empty data`)
+          return this.getFallbackData<T>(path)
+        }
         throw this.classifyError(new Error(`HTTP ${response.status}`), response)
       }
 
@@ -375,8 +442,8 @@ export class WordPressClient {
           return this.getFallbackData<T>(path)
           
         case WordPressErrorType.NOT_FOUND:
-          console.log('WordPress endpoint not found, returning null')
-          return null as unknown as T
+          console.log('WordPress endpoint not found, returning empty data')
+          return this.getFallbackData<T>(path)
           
         case WordPressErrorType.AUTH_ERROR:
           console.error('WordPress authentication failed - check credentials')
@@ -393,8 +460,10 @@ export class WordPressClient {
    * Provide appropriate fallback data based on endpoint type
    */
   private getFallbackData<T>(path: string): T {
-    // For list endpoints, return empty array
-    if (path.includes('posts') && (path.includes('?') || path === '/posts')) {
+    // For list endpoints (programs, episodes, posts), return empty array
+    if (path.includes('program') || path.includes('episode') || path.includes('posts') || 
+        path.match(/^\/[^\/]+$/) || // Root level endpoints like /posts
+        path.includes('search')) {
       return [] as unknown as T
     }
     
@@ -416,6 +485,69 @@ export class WordPressClient {
   }
 
   /**
+   * Generic list content method for posts, programs, episodes, etc.
+   * Uses improved wpGet method with proper caching and SCF transformation
+   */
+  async listContent<T = NormalizedWPPost>(
+    contentType: string,
+    params: {
+      per_page?: number
+      page?: number
+      status?: 'publish' | 'draft' | 'private'
+      categories?: number[]
+      tags?: number[]
+      author?: number
+      search?: string
+      orderby?: 'date' | 'title' | 'menu_order'
+      order?: 'asc' | 'desc'
+      _embed?: boolean
+      [key: string]: any // Allow additional custom parameters
+    } = {},
+    cacheStrategy: CacheStrategy = 'articles'
+  ): Promise<T[]> {
+    // Prepare parameters with defaults
+    const queryParams = {
+      per_page: params.per_page || 10,
+      page: params.page || 1,
+      status: params.status || 'publish',
+      orderby: params.orderby || 'date',
+      order: params.order || 'desc',
+      _embed: params._embed !== false ? 'true' : undefined,
+      categories: params.categories,
+      tags: params.tags,
+      author: params.author,
+      search: params.search,
+      ...Object.fromEntries(
+        Object.entries(params).filter(([key]) => 
+          !['per_page', 'page', 'status', 'orderby', 'order', '_embed', 'categories', 'tags', 'author', 'search'].includes(key)
+        )
+      )
+    }
+
+    // Use appropriate cache strategy based on content type
+    const strategy: CacheStrategy = params.search ? 'search' : cacheStrategy
+
+    try {
+      // Get the correct REST base for this content type
+      const restBase = await this.getRestBase(contentType)
+      const data = await this.wpGet<WPPostsResponse>(`/${restBase}`, queryParams, strategy)
+      
+      // Validate WordPress response
+      const validatedData = WPPostsResponseSchema.parse(data)
+      
+      // Transform to normalized format
+      const normalizedContent = transformWordPressPosts(validatedData)
+      
+      return normalizedContent as T[]
+    } catch (error) {
+      console.error(`WordPress ${contentType} fetch/transform failed:`, error)
+      
+      // Return empty array for failed requests
+      return []
+    }
+  }
+
+  /**
    * List posts with filtering and pagination
    * Uses improved wpGet method with proper caching and SCF transformation
    */
@@ -431,37 +563,7 @@ export class WordPressClient {
     order?: 'asc' | 'desc'
     _embed?: boolean
   } = {}): Promise<NormalizedWPPost[]> {
-    // Prepare parameters with defaults
-    const queryParams = {
-      per_page: params.per_page || 10,
-      page: params.page || 1,
-      status: params.status || 'publish',
-      orderby: params.orderby || 'date',
-      order: params.order || 'desc',
-      _embed: params._embed !== false ? 'true' : undefined,
-      categories: params.categories,
-      tags: params.tags,
-      author: params.author,
-      search: params.search
-    }
-
-    // Use appropriate cache strategy based on request type
-    const strategy: CacheStrategy = params.search ? 'search' : 'articles'
-
-    try {
-      const data = await this.wpGet<WPPostsResponse>('/posts', queryParams, strategy)
-      
-      // Validate WordPress response
-      const validatedData = WPPostsResponseSchema.parse(data)
-      
-      // Transform to normalized format
-      return transformWordPressPosts(validatedData)
-    } catch (error) {
-      console.error('WordPress posts fetch/transform failed:', error)
-      
-      // Return fallback posts
-      return [createFallbackPost()]
-    }
+    return this.listContent('posts', params, 'articles')
   }
 
   /**
@@ -588,6 +690,41 @@ export class WordPressClient {
   }
 
   /**
+   * List programs with filtering and pagination
+   * Uses generic listContent method
+   */
+  async listPrograms(params: {
+    per_page?: number
+    page?: number
+    status?: 'publish' | 'draft' | 'private'
+    program_type?: string
+    search?: string
+    orderby?: 'date' | 'title' | 'menu_order'
+    order?: 'asc' | 'desc'
+    _embed?: boolean
+  } = {}): Promise<NormalizedWPPost[]> {
+    return this.listContent('programs', params, 'programs')
+  }
+
+  /**
+   * List episodes with filtering and pagination
+   * Uses generic listContent method
+   */
+  async listEpisodes(params: {
+    per_page?: number
+    page?: number
+    status?: 'publish' | 'draft' | 'private'
+    program_id?: number
+    season_number?: number
+    search?: string
+    orderby?: 'date' | 'title' | 'episode_number'
+    order?: 'asc' | 'desc'
+    _embed?: boolean
+  } = {}): Promise<NormalizedWPPost[]> {
+    return this.listContent('episodes', params, 'programs')
+  }
+
+  /**
    * Create new post (for admin use)
    * Note: Requires proper WordPress user permissions
    */
@@ -652,6 +789,21 @@ export class WordPressClient {
       console.error(`Failed to update WordPress post ${id}:`, error)
       return null
     }
+  }
+
+  /**
+   * Clear the REST base cache (useful for testing or when WordPress configuration changes)
+   */
+  clearRestBaseCache(): void {
+    REST_BASE_CACHE.clear()
+    console.log('REST base cache cleared')
+  }
+
+  /**
+   * Get cached REST bases (for debugging)
+   */
+  getCachedRestBases(): Record<string, string> {
+    return Object.fromEntries(REST_BASE_CACHE.entries())
   }
 
   /**
@@ -803,6 +955,19 @@ export const wpClient = new WordPressClient()
 export const wpListPosts = (params?: Parameters<typeof wpClient.listPosts>[0]): Promise<NormalizedWPPost[]> => 
   wpClient.listPosts(params)
 
+export const wpListPrograms = (params?: Parameters<typeof wpClient.listPrograms>[0]): Promise<NormalizedWPPost[]> => 
+  wpClient.listPrograms(params)
+
+export const wpListEpisodes = (params?: Parameters<typeof wpClient.listEpisodes>[0]): Promise<NormalizedWPPost[]> => 
+  wpClient.listEpisodes(params)
+
+export const wpListContent = <T = NormalizedWPPost>(
+  contentType: string,
+  params?: Parameters<typeof wpClient.listContent>[1],
+  cacheStrategy?: Parameters<typeof wpClient.listContent>[2]
+): Promise<T[]> => 
+  wpClient.listContent<T>(contentType, params, cacheStrategy)
+
 export const wpGetPostBySlug = (slug: string, embed?: boolean): Promise<NormalizedWPPost | null> => 
   wpClient.getPostBySlug(slug, embed)
 
@@ -817,6 +982,12 @@ export const wpSearchPosts = (query: string, limit?: number): Promise<Normalized
 
 export const wpTestConnection = (): Promise<boolean> => 
   wpClient.testConnection()
+
+export const wpClearRestBaseCache = (): void => 
+  wpClient.clearRestBaseCache()
+
+export const wpGetCachedRestBases = (): Record<string, string> => 
+  wpClient.getCachedRestBases()
 
 // Add missing wpGet export
 export const wpGet = <T>(

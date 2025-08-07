@@ -347,5 +347,4 @@ export function createFallbackPost(
   }
 }
 
-// Export types for use in other files
-export type { NormalizedWPPost, NormalizedZawayaMeta, NormalizedCategory, NormalizedAuthor }
+// Types are already exported above with their definitions

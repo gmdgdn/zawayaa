@@ -1,13 +1,13 @@
+export const revalidate = 300
+
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
 import { Clock, User, ArrowLeft, Headphones, Video, FileText } from "lucide-react"
-import { SectionHeader } from "@/components/ui/section-header"
-import { ArticleCard } from "@/components/ui/article-card"
-import { ProgramCard } from "@/components/ui/program-card"
-import { WriterSpotlight } from "@/components/ui/writer-spotlight"
-import { CategoryChip } from "@/components/ui/category-chip"
-import { TopicFilter } from "@/components/ui/topic-filter"
+import { Button } from "@/components/atoms/Button"
+import { Badge } from "@/components/atoms/Badge"
+import { CardArticle } from "@/components/molecules/CardArticle"
+import { CardProgram } from "@/components/molecules/CardProgram"
 import DevNavigation from "@/components/dev-navigation"
 
 export default async function ArabicHomepage() {
