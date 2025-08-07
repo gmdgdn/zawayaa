@@ -8,7 +8,7 @@ const REVALIDATION_CONFIG = {
   endpoint: process.env.NEXT_PUBLIC_SITE_URL 
     ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`
     : '/api/revalidate',
-  secret: process.env.REVALIDATION_SECRET || 'zawaya-revalidate-secret-2024'
+  secret: process.env.REVALIDATION_SECRET || 'zawaya-wp-revalidation-2025-secure-token'
 }
 
 // WordPress post status mapping

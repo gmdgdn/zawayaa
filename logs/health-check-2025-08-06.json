@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-08-06T14:19:15.369Z",
+  "overall": "healthy",
+  "healthPercentage": 100,
+  "checks": {
+    "wordpress": {
+      "status": "healthy",
+      "statusCode": 200,
+      "responseTime": "unknown",
+      "message": "WordPress API accessible"
+    },
+    "application": {
+      "status": "healthy",
+      "statusCode": 200,
+      "loadTime": "0ms",
+      "message": "Application accessible"
+    },
+    "revalidation": {
+      "status": "healthy",
+      "statusCode": 401,
+      "message": "Revalidation endpoint configured"
+    },
+    "environment": {
+      "status": "healthy",
+      "missing": [],
+      "message": "All required environment variables configured"
+    }
+  }
+}

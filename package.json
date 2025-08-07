@@ -13,13 +13,18 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:ci": "vitest --run --config vitest.config.ci.ts",
+    "test:jsdom": "vitest --run --config vitest.config.ts",
+    "test:happy-dom": "vitest --run --config vitest.config.ci.ts",
     "test-routes": "node -e \"const routes=['/',''/ar/articles','/ar/podcast','/ar/programs','/ar/documentaries']; routes.forEach(r => console.log('Testing:', r))\"",
     "copy-placeholders": "node -e \"const fs=require('fs'); const path='public/images/episodes'; if(!fs.existsSync(path)) fs.mkdirSync(path, {recursive:true}); ['geopolitics','ai_culture','digital_literature','islamic_art'].forEach(f => {try{fs.copyFileSync('public/placeholder.jpg', `${path}/${f}.png`)}catch(e){console.log('File exists or error:', f)}})\"",
     "prepare": "husky install",
     "monitor:health": "node monitoring/health-checks/wordpress-health.js",
     "monitor:performance": "node monitoring/performance/wordpress-performance.js",
     "monitor:dashboard": "node monitoring/dashboard.js",
-    "monitor:alerts": "node monitoring/alerts/alert-system.js"
+    "monitor:alerts": "node monitoring/alerts/alert-system.js",
+    "verify:env": "node scripts/verify-vercel-env.js",
+    "verify:security": "node scripts/verify-security-config.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -69,6 +74,7 @@
     "cmdk": "latest",
     "date-fns": "4.1.0",
     "embla-carousel-react": "latest",
+    "framer-motion": "^12.23.12",
     "geist": "^1.3.1",
     "input-otp": "latest",
     "lucide-react": "^0.454.0",
@@ -84,6 +90,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "tailwindcss-rtl": "^0.9.0",
     "vaul": "latest",
     "wavesurfer.js": "latest",
     "zod": "^3.24.1"

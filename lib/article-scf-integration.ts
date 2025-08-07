@@ -150,7 +150,7 @@ export async function fetchArticlesWithSCF(
 
   try {
     // Fetch posts from WordPress
-    const response = await wpGet('posts', params, {
+    const response = await wpGet('/posts', params, {
       revalidate: 300, // 5 minutes
       tags: ['articles']
     })
@@ -215,7 +215,7 @@ export async function fetchArticleWithSCF(
 }> {
   try {
     // Fetch single post by slug
-    const response = await wpGet('posts', {
+    const response = await wpGet('/posts', {
       slug,
       _embed: true,
       acf_format: 'standard'
@@ -278,7 +278,7 @@ export async function fetchFeaturedArticlesWithSCF(
   cacheTags: string[]
 }> {
   try {
-    const response = await wpGet('posts', {
+    const response = await wpGet('/posts', {
       per_page: limit,
       orderby: 'date',
       order: 'desc',
@@ -448,7 +448,7 @@ export async function fetchRelatedArticlesWithSCF(
       params.categories = currentArticle.categories.join(',')
     }
 
-    const response = await wpGet('posts', params, {
+    const response = await wpGet('/posts', params, {
       revalidate: 600, // 10 minutes
       tags: ['articles', 'related-articles']
     })

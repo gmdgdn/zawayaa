@@ -5,7 +5,7 @@
  * Tests the revalidation API endpoint with various scenarios
  */
 
-const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'zawaya-revalidate-secret-2024'
+const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'zawaya-wp-revalidation-2025-secure-token'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
 async function testRevalidationEndpoint() {

@@ -13,7 +13,7 @@ This guide explains how to test the cache revalidation system that handles WordP
 
 2. **Environment Variables**: Ensure these are set in your `.env.local`:
    ```env
-   REVALIDATION_SECRET=zawaya-revalidate-secret-2024
+   REVALIDATION_SECRET=zawaya-wp-revalidation-2025-secure-token
    NEXT_PUBLIC_BASE_URL=http://localhost:3000
    ```
 
@@ -40,7 +40,7 @@ This script tests:
 
 #### Test GET Endpoint
 ```bash
-curl "http://localhost:3000/api/revalidate?secret=zawaya-revalidate-secret-2024"
+curl "http://localhost:3000/api/revalidate?secret=zawaya-wp-revalidation-2025-secure-token"
 ```
 
 Expected response:
@@ -60,7 +60,7 @@ Expected response:
 curl -X POST http://localhost:3000/api/revalidate \
   -H "Content-Type: application/json" \
   -d '{
-    "secret": "zawaya-revalidate-secret-2024",
+    "secret": "zawaya-wp-revalidation-2025-secure-token",
     "content_type": "post",
     "content_id": 123,
     "action": "publish"
@@ -85,7 +85,7 @@ Expected response:
 curl -X POST http://localhost:3000/api/revalidate \
   -H "Content-Type: application/json" \
   -d '{
-    "secret": "zawaya-revalidate-secret-2024",
+    "secret": "zawaya-wp-revalidation-2025-secure-token",
     "content_type": "program",
     "content_id": 456,
     "action": "update"
@@ -97,7 +97,7 @@ curl -X POST http://localhost:3000/api/revalidate \
 curl -X POST http://localhost:3000/api/revalidate \
   -H "Content-Type: application/json" \
   -d '{
-    "secret": "zawaya-revalidate-secret-2024",
+    "secret": "zawaya-wp-revalidation-2025-secure-token",
     "content_type": "post",
     "content_id": 123,
     "action": "featured_toggle"
@@ -112,7 +112,7 @@ curl -X POST http://localhost:3000/api/revalidate \
   -H "Content-Type: application/json" \
   -H "User-Agent: WordPress/6.0; https://zawaya.example.com" \
   -d '{
-    "secret": "zawaya-revalidate-secret-2024",
+    "secret": "zawaya-wp-revalidation-2025-secure-token",
     "content_type": "post",
     "content_id": 123,
     "content_slug": "test-article",

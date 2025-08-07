@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss"
-import { colors, typography, layout, motion } from "./lib/theme"
 
 const config = {
   darkMode: ["class"],
@@ -14,62 +13,43 @@ const config = {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1rem",
       screens: {
         sm: "640px",
         md: "768px", 
         lg: "1024px",
         xl: "1280px",
-        "2xl": "1400px",
+        "2xl": "1440px", // Updated to match design system max-width
       },
     },
     extend: {
+      // Dubai desert-meets-city color palette
       colors: {
-        // Zawaya Semantic Color Tokens
-        ink: {
-          900: colors["ink-900"],
-          700: colors["ink-700"],
-          600: colors["ink-600"],
+        // Primary colors - midnight blue base
+        primary: {
+          900: "#0F172A", // primary-900
+          700: "#334155", // primary-700
+          50: "#F8FAFC",  // neutral-50 (for dark mode flip)
         },
-        sand: {
-          50: colors["sand-50"],
+        // Accent colors - warm sand
+        accent: {
+          600: "#F59E0B", // accent-600
+          300: "#FDE68A", // accent-300
         },
-        stone: {
-          200: colors["stone-200"],
-          600: colors["stone-600"],
+        // Neutrals
+        neutral: {
+          50: "#F8FAFC",
+          900: "#0F172A",
         },
-        brand: {
-          green: colors["brand-green"],
-          red: colors["brand-red"],
-          yellow: colors["brand-yellow"],
-          orange: colors["brand-orange"],
-          mint: colors["brand-mint"],
-          violet: colors["brand-violet"],
-        },
+        // Error state
+        error: "#DC2626",
         
-        // Legacy Zawaya colors (for backward compatibility)
-        "clr-primary-dark": colors["primary-dark"],
-        "clr-accent": colors.accent,
-        "clr-iris": colors.iris,
-        "clr-orange": colors.orange,
-        "clr-menthol": colors.menthol,
-        "clr-naples": colors.naples,
-        "zawaya-primary": colors.primary,
-        "zawaya-accent": colors.accent,
-        "zawaya-iris": colors.iris,
-        "zawaya-orange": colors.orange,
-        "zawaya-menthol": colors.menthol,
-        "zawaya-yellow": colors.yellow,
-        // Default shadcn colors
+        // Legacy shadcn colors for compatibility
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -82,10 +62,6 @@ const config = {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -95,63 +71,67 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
       },
-      fontSize: {
-        xs: [typography.scale.xs, { lineHeight: typography.lineHeight.body.toString() }],
-        sm: [typography.scale.sm, { lineHeight: typography.lineHeight.body.toString() }],
-        base: [typography.scale.base, { lineHeight: typography.lineHeight.reading.toString() }],
-        lg: [typography.scale.lg, { lineHeight: typography.lineHeight.body.toString() }],
-        xl: [typography.scale.xl, { lineHeight: typography.lineHeight.body.toString() }],
-        "2xl": [typography.scale["2xl"], { lineHeight: typography.lineHeight.display.toString() }],
-        "3xl": [typography.scale["3xl"], { lineHeight: typography.lineHeight.display.toString() }],
-        "4xl": [typography.scale["4xl"], { lineHeight: typography.lineHeight.display.toString() }],
-      },
+      
+      // Typography - IBM Plex Sans Arabic/Latin with modular scale
       fontFamily: {
-        "ge-ss": typography.fonts.arabic,
-        "eurostile": typography.fonts.latin,
-        // RTL default
-        sans: typography.fonts.arabic,
+        sans: ['"IBM Plex Sans Arabic"', '"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        arabic: ['"IBM Plex Sans Arabic"', 'system-ui', 'sans-serif'],
+        latin: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
       },
-      lineHeight: {
-        'arabic': typography.lineHeight.arabic.toString(),
-        'body': typography.lineHeight.body.toString(),
-        'display': typography.lineHeight.display.toString(),
-        'reading': typography.lineHeight.reading.toString(),
+      
+      // Modular-4 font scale
+      fontSize: {
+        '-2': ['0.75rem', { lineHeight: '1.2' }],  // -2 → 0.75rem
+        '-1': ['0.875rem', { lineHeight: '1.3' }], // -1 → 0.875rem
+        '0': ['1rem', { lineHeight: '1.5' }],      // 0 (body) → 1rem
+        '1': ['1.25rem', { lineHeight: '1.4' }],   // 1 → 1.25rem
+        '2': ['1.5rem', { lineHeight: '1.3' }],    // 2 → 1.5rem
+        '3': ['2rem', { lineHeight: '1.2' }],      // 3 → 2rem
+        '4': ['2.75rem', { lineHeight: '1.1' }],   // 4 → 2.75rem
       },
+      
+      // Spacing tokens
+      spacing: {
+        'xs': '4px',   // xs
+        'sm': '8px',   // sm
+        'md': '12px',  // md
+        'lg': '16px',  // lg
+        'xl': '24px',  // xl
+        '2xl': '32px', // 2xl
+      },
+      
+      // Grid system
       maxWidth: {
-        'content': layout.maxContentWidth,
-        'reading': '620px', // for article body text
+        'site': '1440px', // max-width for site
+        'content': '1200px', // content area
+        'reading': '620px', // article reading width
       },
-      aspectRatio: {
-        'card': '3/2',
-        'video': '16/9',
-      },
-      backgroundImage: {
-        // Editorial gradients
-        'cedar-mist': 'linear-gradient(140deg, #1E3E39 0%, #0D2A27 60%)',
-        'sands-dusk': 'linear-gradient(180deg, #FAF7F0 0%, #F6F9F8 100%)',
-        'iris-signal': 'linear-gradient(90deg, #644BD2 0%, #BEF0B4 100%)',
-        // Legacy
-        "geometric-pattern": "url('/pattern.png')",
-      },
-      boxShadow: {
-        // Soft, airy shadows
-        card: '0 6px 20px rgba(13, 42, 39, 0.06)',
-      },
-      transitionDuration: {
-        'default': motion.duration,
-      },
-      transitionTimingFunction: {
-        'default': motion.easing,
-      },
+      
+      // Border radius - soft, friendly corners
       borderRadius: {
-        // Design system radii
-        xl: '16px',        // Cards
-        '2xl': '20px',     // Feature elements
-        // Legacy
+        '2xl': '1rem', // Cards & buttons
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      
+      // Shadows - soft layer
+      boxShadow: {
+        'soft': '0 4px 8px rgba(15, 23, 42, 0.08)',
+        'card': '0 4px 8px rgba(15, 23, 42, 0.08)',
+      },
+      
+      // Grid gap
+      gap: {
+        'grid': '16px', // lg for grid gaps
+      },
+      
+      // Focus ring
+      ringColor: {
+        'accent': '#F59E0B',
+      },
+      
+      // Animations
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -161,15 +141,21 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
       },
     },
   },
   plugins: [
     require("tailwindcss-animate"),
+    require("tailwindcss-rtl"),
   ],
 } satisfies Config
 

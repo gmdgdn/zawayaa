@@ -1,3 +1,5 @@
+export const revalidate = 300
+
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -6,8 +8,6 @@ import { fetchProgramsWithSCF } from "@/lib/program-scf-integration"
 import { getProgramTypeDisplayName } from "@/lib/scf-mappings/program-mappings"
 import Link from "next/link"
 import Image from "next/image"
-
-export const revalidate = 60 * 5 // 5 minutes
 
 const typeIcons = {
   video: Video,

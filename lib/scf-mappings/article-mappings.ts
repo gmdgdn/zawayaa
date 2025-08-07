@@ -333,5 +333,4 @@ export function getArticleRevalidationPaths(post: NormalizedWPPost): string[] {
   return paths
 }
 
-// Re-export types for better compatibility
-export type { ArticleCardProps, ArticleDetailProps, ArticleListProps }
+// Types are already exported above with their definitions

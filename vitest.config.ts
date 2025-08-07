@@ -1,14 +1,31 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
   test: {
-    environment: 'jsdom',
+    environment: 'jsdom', // Default to jsdom for local development
     setupFiles: ['./test/setup.ts'],
     globals: true,
     css: true,
+    // Support both happy-dom (CI) and jsdom (local) environments
+    environmentOptions: {
+      jsdom: {
+        resources: 'usable',
+      },
+    },
+    // Add environment-specific configurations
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true,
+      },
+    },
   },
   resolve: {
     alias: {
