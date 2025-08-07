@@ -3,7 +3,7 @@
  * Tests the complete cache revalidation workflow from WordPress webhooks
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 
 const REVALIDATION_SECRET = process.env.REVALIDATION_SECRET || 'zawaya-revalidate-secret-2024'
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'

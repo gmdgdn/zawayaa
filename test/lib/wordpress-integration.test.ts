@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { WPPost } from '@/lib/wordpress'
 
 // Mock fetch globally
 const mockFetch = vi.fn()
@@ -26,6 +27,22 @@ vi.mock('@/lib/cache-manager', () => ({
   }))
 }))
 
+const createMockWpPost = (overrides: Partial<WPPost> = {}): WPPost => ({
+  id: 1,
+  slug: 'test-post',
+  status: 'publish',
+  title: { rendered: 'Test Post' },
+  content: { rendered: '<p>Test content</p>' },
+  excerpt: { rendered: '<p>Test excerpt</p>' },
+  author: 1,
+  featured_media: 123,
+  date: '2024-01-01T00:00:00',
+  modified: '2024-01-02T00:00:00',
+  categories: [1, 2],
+  tags: [3, 4],
+  ...overrides,
+});
+
 describe('WordPress Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -34,18 +51,7 @@ describe('WordPress Integration Tests', () => {
   describe('Article Fetching', () => {
     it('should fetch articles with proper SCF field mapping', async () => {
       const mockArticles = [
-        {
-          id: 1,
-          slug: 'test-article',
-          title: { rendered: 'Test Article' },
-          content: { rendered: '<p>Test content</p>' },
-          excerpt: { rendered: '<p>Test excerpt</p>' },
-          author: 1,
-          featured_media: 123,
-          date: '2024-01-01T00:00:00',
-          modified: '2024-01-02T00:00:00',
-          categories: [1, 2],
-          tags: [3, 4],
+        createMockWpPost({
           zawaya_meta: {
             title_arabic: 'مقال تجريبي',
             excerpt_arabic: 'مقتطف تجريبي',
@@ -54,7 +60,7 @@ describe('WordPress Integration Tests', () => {
             reading_time_minutes: 5,
             audio_narration_url: 'http://example.com/audio.mp3'
           }
-        }
+        })
       ]
 
       mockFetch.mockResolvedValueOnce({
@@ -75,14 +81,8 @@ describe('WordPress Integration Tests', () => {
 
     it('should fetch featured articles', async () => {
       const mockArticles = [
-        {
-          id: 1,
-          zawaya_meta: { is_featured: true, title_arabic: 'مقال مميز' }
-        },
-        {
-          id: 2,
-          zawaya_meta: { is_featured: false, title_arabic: 'مقال عادي' }
-        }
+        createMockWpPost({ zawaya_meta: { is_featured: true, title_arabic: 'مقال مميز' } }),
+        createMockWpPost({ id: 2, zawaya_meta: { is_featured: false, title_arabic: 'مقال عادي' } })
       ]
 
       mockFetch.mockResolvedValueOnce({
@@ -95,24 +95,21 @@ describe('WordPress Integration Tests', () => {
       
       const result = await ArticleHelpers.getArticles({ featured: true })
       
-      // Should filter to only featured articles
       expect(result.every(article => article.zawaya_meta.is_featured)).toBe(true)
     })
 
     it('should fetch article by slug', async () => {
-      const mockArticle = {
-        id: 1,
+      const mockArticle = createMockWpPost({
         slug: 'test-article',
-        title: { rendered: 'Test Article' },
         zawaya_meta: {
           title_arabic: 'مقال تجريبي'
         }
-      }
+      })
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve(mockArticle)
+        json: () => Promise.resolve([mockArticle])
       })
 
       const { ArticleHelpers } = await import('@/lib/wordpress-content-helpers')
@@ -128,7 +125,7 @@ describe('WordPress Integration Tests', () => {
   describe('Program and Episode Fetching', () => {
     it('should fetch programs with SCF metadata', async () => {
       const mockPrograms = [
-        {
+        createMockWpPost({
           id: 1,
           slug: 'test-program',
           title: { rendered: 'Test Program' },
@@ -138,7 +135,7 @@ describe('WordPress Integration Tests', () => {
             theme_color: '#ff0000',
             episode_count: 10
           }
-        }
+        })
       ]
 
       mockFetch.mockResolvedValueOnce({
@@ -158,7 +155,7 @@ describe('WordPress Integration Tests', () => {
 
     it('should fetch episodes for a program', async () => {
       const mockEpisodes = [
-        {
+        createMockWpPost({
           id: 1,
           title: { rendered: 'Episode 1' },
           zawaya_meta: {
@@ -167,7 +164,7 @@ describe('WordPress Integration Tests', () => {
             episode_number: 1,
             duration_seconds: 1800
           }
-        }
+        })
       ]
 
       mockFetch.mockResolvedValueOnce({
@@ -221,13 +218,13 @@ describe('WordPress Integration Tests', () => {
   describe('Search Functionality', () => {
     it('should search articles with query', async () => {
       const mockResults = [
-        {
+        createMockWpPost({
           id: 1,
           title: { rendered: 'Search Result' },
           zawaya_meta: {
             title_arabic: 'نتيجة البحث'
           }
-        }
+        })
       ]
 
       mockFetch.mockResolvedValueOnce({
@@ -307,16 +304,14 @@ describe('WordPress Integration Tests', () => {
 
   describe('SCF Field Processing', () => {
     it('should prefer zawaya_meta over meta fields', async () => {
-      const mockPost = {
-        id: 1,
-        title: { rendered: 'Test' },
+      const mockPost = createMockWpPost({
         meta: {
           title_arabic: 'من meta'
         },
         zawaya_meta: {
           title_arabic: 'من zawaya_meta'
         }
-      }
+      });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -332,11 +327,9 @@ describe('WordPress Integration Tests', () => {
     })
 
     it('should handle missing SCF fields gracefully', async () => {
-      const mockPost = {
-        id: 1,
-        title: { rendered: 'Test' },
-        // No meta or zawaya_meta fields
-      }
+      const mockPost = createMockWpPost()
+      delete mockPost.zawaya_meta
+      delete mockPost.meta
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -355,9 +348,7 @@ describe('WordPress Integration Tests', () => {
 
   describe('Embedded Data Handling', () => {
     it('should process embedded author data', async () => {
-      const mockPost = {
-        id: 1,
-        title: { rendered: 'Test' },
+      const mockPost = createMockWpPost({
         _embedded: {
           author: [{
             id: 1,
@@ -365,7 +356,7 @@ describe('WordPress Integration Tests', () => {
             slug: 'test-author'
           }]
         }
-      }
+      });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -377,14 +368,11 @@ describe('WordPress Integration Tests', () => {
       
       const result = await ArticleHelpers.getArticles()
       
-      expect(result[0]._embedded?.author).toBeDefined()
-      expect(result[0]._embedded?.author?.[0].name).toBe('Test Author')
+      expect(result[0].author?.name).toBe('Test Author')
     })
 
     it('should process embedded featured media', async () => {
-      const mockPost = {
-        id: 1,
-        title: { rendered: 'Test' },
+      const mockPost = createMockWpPost({
         _embedded: {
           'wp:featuredmedia': [{
             id: 123,
@@ -392,7 +380,7 @@ describe('WordPress Integration Tests', () => {
             alt_text: 'Test image'
           }]
         }
-      }
+      });
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -404,8 +392,7 @@ describe('WordPress Integration Tests', () => {
       
       const result = await ArticleHelpers.getArticles()
       
-      expect(result[0]._embedded?.['wp:featuredmedia']).toBeDefined()
-      expect(result[0]._embedded?.['wp:featuredmedia']?.[0].source_url).toBe('http://example.com/image.jpg')
+      expect(result[0].featured_image_url).toBe('http://example.com/image.jpg')
     })
   })
 })

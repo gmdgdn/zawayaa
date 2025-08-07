@@ -282,6 +282,7 @@ export function AudioPlayer({
             size="sm"
             onClick={() => skipTime(-10)}
             className="text-stone-600 hover:text-ink-900 hover:bg-stone-100"
+            aria-label="Skip back 10 seconds"
           >
             <SkipBack className="w-4 h-4" />
           </Button>
@@ -290,6 +291,7 @@ export function AudioPlayer({
             onClick={togglePlay}
             disabled={isLoading}
             className="bg-primary hover:bg-primary/90 text-white w-12 h-12 rounded-full hover-lift group/play"
+            aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isLoading ? (
               <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -305,6 +307,7 @@ export function AudioPlayer({
             size="sm"
             onClick={() => skipTime(10)}
             className="text-stone-600 hover:text-ink-900 hover:bg-stone-100"
+            aria-label="Skip forward 10 seconds"
           >
             <SkipForward className="w-4 h-4" />
           </Button>
@@ -316,6 +319,7 @@ export function AudioPlayer({
             size="sm"
             onClick={changePlaybackRate}
             className="text-stone-600 hover:text-ink-900 hover:bg-stone-100 text-xs font-bold min-w-[40px]"
+            aria-label={`Change playback rate, current rate ${playbackRate}x`}
           >
             {playbackRate}x
           </Button>
@@ -325,6 +329,7 @@ export function AudioPlayer({
             size="sm"
             onClick={toggleMute}
             className="text-stone-600 hover:text-ink-900 hover:bg-stone-100"
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </Button>

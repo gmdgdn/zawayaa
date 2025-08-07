@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { CacheManager, smartRevalidate, cascadeRevalidate, emergencyCacheClear } from '@/lib/cache-manager'
+import { CacheManager } from '@/lib/cache-manager'
 import { 
   RevalidationLogger, 
   RevalidationEventType, 
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
         'Emergency cache clear triggered'
       )
       
-      const emergencyResult = emergencyCacheClear()
+      const emergencyResult = CacheManager.emergencyCacheClear()
       const duration = Date.now() - startTime
       
       logRevalidationEvent(
@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
 
     // If content type and ID are provided, use smart revalidation
     if (body.content_type && (body.content_id || body.content_slug)) {
-      const smartResult = smartRevalidate(
+      const smartResult = CacheManager.smartRevalidate(
         body.content_type,
         body.action || 'update',
         body.content_slug,
@@ -371,7 +371,7 @@ export async function POST(request: NextRequest) {
       try {
         if (body.cascade) {
           // Use cascade revalidation for related tags
-          const cascadedTags = cascadeRevalidate(tag)
+          const cascadedTags = CacheManager.cascadeRevalidate(tag)
           results.tags.push(tag, ...cascadedTags)
           
           logRevalidationEvent(
